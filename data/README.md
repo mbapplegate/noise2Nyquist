@@ -6,7 +6,7 @@ Raw data can be downloaded [here](https://publications.mpi-cbg.de/publications-s
 
 Computed Tomography Data are from the [2016 Mayo Clinic Low Dose CT Grand Challenge](https://www.aapm.org/grandchallenge/lowdosect/)
 
-Raw data can be downloaded [here](https://aapm.box.com/s/eaw4jddb53keg1bptavvvd1sf4x3pe9h)
+Raw data can be downloaded [here](https://aapm.box.com/s/eaw4jddb53keg1bptavvvd1sf4x3pe9h](https://aapm.app.box.com/s/eaw4jddb53keg1bptavvvd1sf4x3pe9h/folder/145240708855)
 
 Phantom data are generated in the code
 
