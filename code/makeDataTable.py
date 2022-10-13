@@ -208,12 +208,14 @@ if __name__ == '__main__':
     noise2NyquistRunCT= '2022-07-06--07-54-21'
     noise2voidRunCT= '2022-07-08--13-02-37'
     line2lineRunCT= '2022-07-10--19-50-07'
+    neigh2neighRunCT = '2022-10-12-18-47'
     
     supervisedDirCT = os.path.join('..','results','ct',supervisedRunCT)
     noise2NyquistDirCT  = os.path.join('..','results','ct',noise2NyquistRunCT)
     noise2VoidDirCT   = os.path.join('..','results','ct',noise2voidRunCT)
     line2lineDirCT = os.path.join('..','results','ct',line2lineRunCT)
     convenDirCT = os.path.join('..','results','ct','conventional')
+    neigh2neighDirCT = os.path.join('..','results','ct','neigh2neigh',neigh2neighRunCT)
     
     ##OCT data dirs
     #Conventionally processed OCT data was done on 96 frames/volume
@@ -284,6 +286,7 @@ if __name__ == '__main__':
     noise2NyquistCTResults = []
     noise2VoidCTResults = []
     line2LineCTResults = []
+    neigh2neighCTResults = []
     for f in folds:
         truncClean=pd.read_csv(os.path.join(supervisedDirCT,'%02d'%f,'testResults_last.csv'))
         supervisedCTResults.append(getRandomNResultsCT(truncClean,numCTFrames))
@@ -293,11 +296,14 @@ if __name__ == '__main__':
         noise2VoidCTResults.append(getRandomNResultsCT(truncN2V,numCTFrames))
         truncL2L=pd.read_csv(os.path.join(line2lineDirCT,'%02d'%f,'testResults_last.csv'))
         line2LineCTResults.append(getRandomNResultsCT(truncL2L,numCTFrames))
+        truncNe2Ne=pd.read_csv(os.path.join(neigh2neighDirCT,'%02d'%f,'testResults_last.csv'))
+        neigh2neighCTResults.append(getRandomNResultsCT(truncNe2Ne,numCTFrames))
         
     supervisedCTAvg, supervisedCTStd = getSummaryStats(supervisedCTResults)
     noise2NyquistCTAvg, noise2NyquistCTStd = getSummaryStats(noise2NyquistCTResults)
     noise2VoidCTAvg, noise2VoidCTStd = getSummaryStats(noise2VoidCTResults)
     line2LineCTAvg, line2LineCTStd = getSummaryStats(line2LineCTResults)
+    neigh2neighCTAvg,neigh2neighCTStd=getSummaryStats(neigh2neighCTResults)
     
     noisyCTAvg, noisyCTStd = getConventionalStatsCT(convenDirCT,'none0')
     medianCTAvg, medianCTStd = getConventionalStatsCT(convenDirCT,'median3')
@@ -402,17 +408,18 @@ if __name__ == '__main__':
     #Collect CT data into nice dataframe to copy to table
     ########################################
     CTStatsDF = pd.DataFrame({'Method':[],'avgPSNR':[],'stdPSNR':[],'avgSSIM':[],'stdSSIM':[],'avgMSE':[],'stdMSE':[]})
-    CTStatsDF['Method']=['Noisy','Supervised','noise2Nyquist','noise2void',
+    CTStatsDF['Method']=['Noisy','Supervised','noise2Nyquist','noise2void','neighbor2neighbor',
                           'Median','Gaussian','Stack Avg.','BM3D','BM4D']
     CTStatsDF.iloc[0,1::] = [val for pair in zip(noisyCTAvg, noisyCTStd) for val in pair]
     CTStatsDF.iloc[1,1::] = [val for pair in zip(supervisedCTAvg, supervisedCTStd) for val in pair]
     CTStatsDF.iloc[2,1::] = [val for pair in zip(noise2NyquistCTAvg,noise2NyquistCTStd) for val in pair]
     CTStatsDF.iloc[3,1::] = [val for pair in zip(noise2VoidCTAvg,noise2VoidCTStd) for val in pair]
-    CTStatsDF.iloc[4,1::] = [val for pair in zip(medianCTAvg,medianCTStd) for val in pair]
-    CTStatsDF.iloc[5,1::] = [val for pair in zip(gaussianCTAvg,gaussianCTStd) for val in pair]
-    CTStatsDF.iloc[6,1::] = [val for pair in zip(oof3CTAvg,oof3CTStd) for val in pair]
-    CTStatsDF.iloc[7,1::] = [val for pair in zip(bm3dCTAvg,bm3dCTStd) for val in pair]
-    CTStatsDF.iloc[8,1::] = [val for pair in zip(bm4dCTAvg,bm4dCTStd) for val in pair]
+    CTStatsDF.iloc[4,1::] = [val for pair in zip(neigh2neighCTAvg,neigh2neighCTStd) for val in pair]
+    CTStatsDF.iloc[5,1::] = [val for pair in zip(medianCTAvg,medianCTStd) for val in pair]
+    CTStatsDF.iloc[6,1::] = [val for pair in zip(gaussianCTAvg,gaussianCTStd) for val in pair]
+    CTStatsDF.iloc[7,1::] = [val for pair in zip(oof3CTAvg,oof3CTStd) for val in pair]
+    CTStatsDF.iloc[8,1::] = [val for pair in zip(bm3dCTAvg,bm3dCTStd) for val in pair]
+    CTStatsDF.iloc[9,1::] = [val for pair in zip(bm4dCTAvg,bm4dCTStd) for val in pair]
     
     #########################################
     #Collect OCT Data into nice dataframe

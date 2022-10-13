@@ -421,7 +421,7 @@ def main(dataType,dataPath,csvDir,saveDir,remakeCSVs=False,cleanTargets=False,ne
         cleanImageExists = False
    
     if singleImageTraining and not noise2VoidFlag:
-        modelType = 'unet1d'
+        modelType = 'neigh2neigh'
     else:
         modelType='unet'   
    
@@ -449,8 +449,8 @@ def main(dataType,dataPath,csvDir,saveDir,remakeCSVs=False,cleanTargets=False,ne
     #Obviously not ideal, but this was built up over time so some of the options don't make the most sense
     if not singleImageTraining and modelType.lower() == 'unet1d':
         raise ValueError('UNet1d model without singleImageTraining won\'t work')
-    if singleImageTraining and modelType.lower() != 'unet1d' and not noise2VoidFlag:
-         raise ValueError('UNet with single image training should use the noise2Void flag')
+    #if singleImageTraining and modelType.lower() != 'unet1d' and not noise2VoidFlag:
+    #     raise ValueError('UNet with single image training should use the noise2Void flag')
     if singleImageTraining and cleanTargets:
         raise ValueError('Single Image with Clean Targets Doesn\'t make sense')
     if not cleanImageExists and cleanTargets:
@@ -621,19 +621,19 @@ def main(dataType,dataPath,csvDir,saveDir,remakeCSVs=False,cleanTargets=False,ne
             model.to(device)
         #Do the actual testing for the last model    
         testPSNR_last, testSSIM_last, testNRMSE_last,testNames_last = test(testLoader,model,device,testDirLast,dataType=dataType,sampMean=sampleMean,sampStd=sampleStd,cleanImExists=cleanImageExists)
-        if testOnly:
-            bestModel = utils.loadModel(os.path.join(saveDir,'%02d'%splitNum,'modelWeights_best.pth'),modelType=modelType)
-        else:
-            bestModel=utils.loadModel(os.path.join(logdir,'modelWeights_best.pth'),modelType=modelType)
-        bestModel.to(device)
+        #if testOnly:
+        #    bestModel = utils.loadModel(os.path.join(saveDir,'%02d'%splitNum,'modelWeights_best.pth'),modelType=modelType)
+        #else:
+        #    bestModel=utils.loadModel(os.path.join(logdir,'modelWeights_best.pth'),modelType=modelType)
+        #bestModel.to(device)
         #Do the testing for the best model
-        testPSNR_best, testSSIM_best, testNRMSE_best,testNames_best = test(testLoader,bestModel,device,testDirBest,dataType=dataType,sampMean=sampleMean,sampStd=sampleStd,cleanImExists=cleanImageExists)
+        #testPSNR_best, testSSIM_best, testNRMSE_best,testNames_best = test(testLoader,bestModel,device,testDirBest,dataType=dataType,sampMean=sampleMean,sampStd=sampleStd,cleanImExists=cleanImageExists)
         if testOnly:
             utils.writeTestResults(os.path.join(saveDir,'%02d'%splitNum,'testResults_last.csv'),testNames_last,testPSNR_last,testSSIM_last,testNRMSE_last)
-            utils.writeTestResults(os.path.join(saveDir,'%02d'%splitNum,'testResults_best.csv'),testNames_best,testPSNR_best,testSSIM_best,testNRMSE_best)
+            #utils.writeTestResults(os.path.join(saveDir,'%02d'%splitNum,'testResults_best.csv'),testNames_best,testPSNR_best,testSSIM_best,testNRMSE_best)
         else:
             utils.writeTestResults(os.path.join(logdir,'testResults_last.csv'),testNames_last,testPSNR_last,testSSIM_last,testNRMSE_last)
-            utils.writeTestResults(os.path.join(logdir,'testResults_best.csv'),testNames_best,testPSNR_best,testSSIM_best,testNRMSE_best)
+          #  utils.writeTestResults(os.path.join(logdir,'testResults_best.csv'),testNames_best,testPSNR_best,testSSIM_best,testNRMSE_best)
 if __name__ == '__main__':
     
     #Command line arguments that will let you flip all the different switches from the CL

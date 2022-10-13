@@ -347,20 +347,36 @@ def calculate_psnr(target, ref):
 if __name__ == '__main__':
     
     if opt.dataType=='oct':
-        subfolders = [f.path for f in os.scandir(os.path.join(opt.data_dir,'current')) if f.is_dir() ]
-        folds = KFold(n_splits=10)
-        trainPatients=[]
-        testPatients=[]
         
-        for trainIdx,testIdx in folds.split(subfolders):
-            trainPatients.append([subfolders[i] for i in trainIdx])
-            testPatients.append([subfolders[i] for i in testIdx])
+        testNums = [[11,31,28,8], [6,15,25,2],
+                        [5,27,24,14], [9,26,16,7],
+                        [19,34,29,23],[18,35,13,30],
+                        [17,22],[1,12,3],[32,20,33],
+                        [0,21,4]]
+        trainNums = []
+        for i in range(len(testNums)):
+            allNums = np.arange(36,dtype='int32')
+            temp=testNums[i].copy()
+            temp.append(10)
+            foldNums=np.delete(allNums,np.array(temp,dtype='int32'))
+            trainNums.append(foldNums)
         
-        thisFoldTrainNoisy = trainPatients[opt.fold_number]
-        thisFoldTestNoisy = testPatients[opt.fold_number]
+        trainPath = []
+        testPath = []
+        for i in range(len(trainNums[opt.fold_number])):
+            trainPath.append(os.path.join(opt.data_dir,'%02d'%trainNums[opt.fold_number][i]))
+        for j in range(len(testNums[opt.fold_number])):
+            testPath.append(os.path.join(opt.data_dir,'%02d'%testNums[opt.fold_number][j]))
+            
+            
+        thisFoldTrainNoisy = trainPath
+        thisFoldTestNoisy = testPath
         thisFoldTrainClean = None
         thisFoldTestClean = None
-        
+    
+    if opt.dataType == 'confocal':
+        testVolumes = [[2,5] ,[8,11],[14,1],[9,4],
+                       [7,13],[0,3],[6],[12],[15],[10]]
     if opt.dataType=='ct':
         subfoldersNoisy = [f.path for f in os.scandir(os.path.join(opt.data_dir,'current')) if f.is_dir()]
         subfoldersClean = [f.path for f in os.scandir(os.path.join(opt.data_dir,'clean')) if f.is_dir()]
@@ -389,7 +405,10 @@ if __name__ == '__main__':
                                 pin_memory=False,
                                 drop_last=True)
     valDataset = DataLoader_Imagenet_val(thisFoldTestNoisy,thisFoldTestClean,patch=opt.patchsize)
-    valLoader = DataLoader(dataset=valDataset,
+    indicies = range(len(valDataset))
+    subsetIdxs = np.random.choice(indicies,size=1024)
+    valSubset = torch.utils.data.Subset(valDataset,subsetIdxs)
+    valLoader = DataLoader(dataset=valSubset,
                            num_workers=8,
                            batch_size=opt.batchsize,
                            shuffle=False,

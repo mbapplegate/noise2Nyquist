@@ -19,6 +19,7 @@ from torch.autograd import Variable
 import torchvision.transforms as T
 from matplotlib import pyplot as plt
 from  utils.models import UNet,UNet1D
+import utils.arch_unet
 from torchvision import utils as U
 from PIL import Image,ImageFilter
 
@@ -824,6 +825,8 @@ def loadModel(modelWtsPath,modelType='unet'):
         model = UNet(in_channels=1,out_channels=1)
     elif modelType.lower()=='unet1d':
         model = UNet1D(in_channels=1,out_channels=1)
+    elif modelType.lower()=='neigh2neigh':
+        model = utils.arch_unet.UNet(in_nc=1,out_nc=1,n_feature=48,)
     else:
         raise ValueError("Only 'UNet' and 'UNet1D' models coded")
     model.load_state_dict(torch.load(modelWtsPath))
