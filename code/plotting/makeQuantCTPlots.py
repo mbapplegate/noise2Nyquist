@@ -77,11 +77,13 @@ if __name__ == '__main__':
     nextTargDir  = '../../results/ct/2022-07-06--07-54-21'
     n2vTargDir   = '../../results/ct/2022-07-08--13-02-37'
     line2lineDir = '../../results/ct/2022-07-10--19-50-07'
+    neigh2neighDir = '../../results/ct/neigh2neigh/2022-10-12-18-47'
     folds = range(10)
     cleanDat = []
     nextDat = []
     n2vDat = []
     line2lineDat = []
+    ne2neDat = []
     totalScans = 0
     #Give me a list of lists with each entry containing data from a patient (first idx fold, second idx patient)
     for f in folds:
@@ -94,130 +96,132 @@ if __name__ == '__main__':
         n2vDat.append(getRandomNResults(truncN2V,numFrames))
         truncL2L=pd.read_csv(os.path.join(line2lineDir,'%02d'%f,'testResults_last.csv'))
         line2lineDat.append(getRandomNResults(truncL2L,numFrames))
+        truncNe2Ne=pd.read_csv(os.path.join(neigh2neighDir,'%02d'%f,'testResults_last.csv'))
+        ne2neDat.append(getRandomNResults(truncNe2Ne,numFrames))
         totalScans += len(cleanResults)
-    #Plotting stuff    
-    jitterAmt = 0.03
-    spacing = [-0.3,-0.1,0.1,0.3]
-    #Plot the first few patients as boxplots
-    fig,ax = plt.subplots(1,1,figsize=(10,7))
-    meanVal = 0
-    trueMeanVal = 0
-    patientCodes=[]
-    for i in range(4):
-        for j in range(len(cleanDat[i])):
-            frameName = cleanDat[i][j]['ImageName'].iloc[0]
-            patientCodes.append(cleanDat[i][j]['Patient'].iloc[0])
-            cbox=ax.boxplot(cleanDat[i][j][' SSIM'],positions=[trueMeanVal+spacing[0]],labels=[''],patch_artist=True)
-            nyqbox=ax.boxplot(nextDat[i][j][' SSIM'],positions=[trueMeanVal+spacing[1]],labels=[''],patch_artist=True)
-            voidbox=ax.boxplot(n2vDat[i][j][' SSIM'],positions=[trueMeanVal+spacing[2]],labels=[''],patch_artist=True)
-            linebox=ax.boxplot(line2lineDat[i][j][' SSIM'],positions=[trueMeanVal+spacing[3]],labels=[''],patch_artist=True)
-            cbox['boxes'][0].set_facecolor('tab:blue')
-            cbox['fliers'][0].set_markerfacecolor('tab:blue')
-            [w.set_color('gray') for w in cbox['whiskers']]
-            [c.set_color('gray') for c in cbox['caps']]
-            cbox['medians'][0].set_color('black')
-            cbox['medians'][0].set_linewidth(2)
+    # #Plotting stuff    
+    # jitterAmt = 0.03
+    # spacing = [-0.3,-0.1,0.1,0.3]
+    # #Plot the first few patients as boxplots
+    # fig,ax = plt.subplots(1,1,figsize=(10,7))
+    # meanVal = 0
+    # trueMeanVal = 0
+    # patientCodes=[]
+    # for i in range(4):
+    #     for j in range(len(cleanDat[i])):
+    #         frameName = cleanDat[i][j]['ImageName'].iloc[0]
+    #         patientCodes.append(cleanDat[i][j]['Patient'].iloc[0])
+    #         cbox=ax.boxplot(cleanDat[i][j][' SSIM'],positions=[trueMeanVal+spacing[0]],labels=[''],patch_artist=True)
+    #         nyqbox=ax.boxplot(nextDat[i][j][' SSIM'],positions=[trueMeanVal+spacing[1]],labels=[''],patch_artist=True)
+    #         voidbox=ax.boxplot(n2vDat[i][j][' SSIM'],positions=[trueMeanVal+spacing[2]],labels=[''],patch_artist=True)
+    #         linebox=ax.boxplot(line2lineDat[i][j][' SSIM'],positions=[trueMeanVal+spacing[3]],labels=[''],patch_artist=True)
+    #         cbox['boxes'][0].set_facecolor('tab:blue')
+    #         cbox['fliers'][0].set_markerfacecolor('tab:blue')
+    #         [w.set_color('gray') for w in cbox['whiskers']]
+    #         [c.set_color('gray') for c in cbox['caps']]
+    #         cbox['medians'][0].set_color('black')
+    #         cbox['medians'][0].set_linewidth(2)
             
-            nyqbox['boxes'][0].set_facecolor('tab:orange')
-            nyqbox['fliers'][0].set_markerfacecolor('tab:orange')
-            [w.set_color('gray') for w in nyqbox['whiskers']]
-            [c.set_color('gray') for c in nyqbox['caps']]
-            nyqbox['medians'][0].set_color('black')
-            nyqbox['medians'][0].set_linewidth(2)
+    #         nyqbox['boxes'][0].set_facecolor('tab:orange')
+    #         nyqbox['fliers'][0].set_markerfacecolor('tab:orange')
+    #         [w.set_color('gray') for w in nyqbox['whiskers']]
+    #         [c.set_color('gray') for c in nyqbox['caps']]
+    #         nyqbox['medians'][0].set_color('black')
+    #         nyqbox['medians'][0].set_linewidth(2)
             
-            voidbox['boxes'][0].set_facecolor('tab:green')
-            voidbox['fliers'][0].set_markerfacecolor('tab:green')
-            [w.set_color('gray') for w in voidbox['whiskers']]
-            [c.set_color('gray') for c in voidbox['caps']]
-            voidbox['medians'][0].set_color('black')
-            voidbox['medians'][0].set_linewidth(2)
+    #         voidbox['boxes'][0].set_facecolor('tab:green')
+    #         voidbox['fliers'][0].set_markerfacecolor('tab:green')
+    #         [w.set_color('gray') for w in voidbox['whiskers']]
+    #         [c.set_color('gray') for c in voidbox['caps']]
+    #         voidbox['medians'][0].set_color('black')
+    #         voidbox['medians'][0].set_linewidth(2)
             
-            linebox['boxes'][0].set_facecolor('tab:red')
-            linebox['fliers'][0].set_markerfacecolor('tab:red')
-            [w.set_color('gray') for w in linebox['whiskers']]
-            [c.set_color('gray') for c in linebox['caps']]
-            linebox['medians'][0].set_color('black')
-            linebox['medians'][0].set_linewidth(2)
-            if i != 3 or j != len(cleanDat[i])-1:
-                ax.plot([trueMeanVal+spacing[3]+0.2,trueMeanVal+spacing[3]+0.2],[0.6,1],'k',linewidth=2)
-            trueMeanVal += 1
-            meanVal +=1
-    ax.plot([],[],'s',markersize=12,color='tab:blue',label='Supervised')
-    ax.plot([],[],'s',markersize=12,color='tab:orange',label='Noise2Nyquist')
-    ax.plot([],[],'s',markersize=12,color='tab:green',label='Noise2Void')
-    ax.plot([],[],'s',markersize=12,color='tab:red',label='Line2Line')
-    ax.set_xticks(range(len(patientCodes)))
-    ax.set_xticklabels(patientCodes)
-    ax.set_xlabel('Patient')
-    #ax.xaxis.grid(True)
-    ax.legend()
-    ax.set_ylim([0.65,1])
-    ax.yaxis.grid(True)
-    ax.set_ylabel('SSIM')
-    ax.set_title('CT Denoising Results')
+    #         linebox['boxes'][0].set_facecolor('tab:red')
+    #         linebox['fliers'][0].set_markerfacecolor('tab:red')
+    #         [w.set_color('gray') for w in linebox['whiskers']]
+    #         [c.set_color('gray') for c in linebox['caps']]
+    #         linebox['medians'][0].set_color('black')
+    #         linebox['medians'][0].set_linewidth(2)
+    #         if i != 3 or j != len(cleanDat[i])-1:
+    #             ax.plot([trueMeanVal+spacing[3]+0.2,trueMeanVal+spacing[3]+0.2],[0.6,1],'k',linewidth=2)
+    #         trueMeanVal += 1
+    #         meanVal +=1
+    # ax.plot([],[],'s',markersize=12,color='tab:blue',label='Supervised')
+    # ax.plot([],[],'s',markersize=12,color='tab:orange',label='Noise2Nyquist')
+    # ax.plot([],[],'s',markersize=12,color='tab:green',label='Noise2Void')
+    # ax.plot([],[],'s',markersize=12,color='tab:red',label='Line2Line')
+    # ax.set_xticks(range(len(patientCodes)))
+    # ax.set_xticklabels(patientCodes)
+    # ax.set_xlabel('Patient')
+    # #ax.xaxis.grid(True)
+    # ax.legend()
+    # ax.set_ylim([0.65,1])
+    # ax.yaxis.grid(True)
+    # ax.set_ylabel('SSIM')
+    # ax.set_title('CT Denoising Results')
   
-    plt.tight_layout()
-    plt.savefig('../../communications/paper/figures/ct/CTScanQuant.png')
+    # plt.tight_layout()
+    # plt.savefig('../../results/ct/figures/CTScanQuant.png')
     
-    #Get average metrics for each patient
-    avgClean = np.zeros((len(folds),3))
-    avgNext = np.zeros((len(folds),3))
-    avgVoid = np.zeros((len(folds),3))
-    avgLine = np.zeros((len(folds),3))
-    scanNum = 0
-    for i in range(len(cleanDat)):
-        for j in range(len(cleanDat[i])):
-            avgCleanPSNR = np.mean(cleanDat[i][j][' PSNR'])
-            avgCleanSSIM = np.mean(cleanDat[i][j][' SSIM'])
-            avgCleanMSE = np.mean(cleanDat[i][j][' MSE'])
-            avgClean[scanNum,:]=[avgCleanPSNR,avgCleanSSIM,avgCleanMSE]
+    # #Get average metrics for each patient
+    # avgClean = np.zeros((len(folds),3))
+    # avgNext = np.zeros((len(folds),3))
+    # avgVoid = np.zeros((len(folds),3))
+    # avgLine = np.zeros((len(folds),3))
+    # scanNum = 0
+    # for i in range(len(cleanDat)):
+    #     for j in range(len(cleanDat[i])):
+    #         avgCleanPSNR = np.mean(cleanDat[i][j][' PSNR'])
+    #         avgCleanSSIM = np.mean(cleanDat[i][j][' SSIM'])
+    #         avgCleanMSE = np.mean(cleanDat[i][j][' MSE'])
+    #         avgClean[scanNum,:]=[avgCleanPSNR,avgCleanSSIM,avgCleanMSE]
             
-            avgNextPSNR = np.mean(nextDat[i][j][' PSNR'])
-            avgNextSSIM = np.mean(nextDat[i][j][' SSIM'])
-            avgNextMSE = np.mean(nextDat[i][j][' MSE'])
-            avgNext[scanNum,:]=[avgNextPSNR,avgNextSSIM,avgNextMSE]
+    #         avgNextPSNR = np.mean(nextDat[i][j][' PSNR'])
+    #         avgNextSSIM = np.mean(nextDat[i][j][' SSIM'])
+    #         avgNextMSE = np.mean(nextDat[i][j][' MSE'])
+    #         avgNext[scanNum,:]=[avgNextPSNR,avgNextSSIM,avgNextMSE]
             
-            avgVoidPSNR = np.mean(n2vDat[i][j][' PSNR'])
-            avgVoidSSIM = np.mean(n2vDat[i][j][' SSIM'])
-            avgVoidMSE = np.mean(n2vDat[i][j][' MSE'])
-            avgVoid[scanNum,:]=[avgVoidPSNR,avgVoidSSIM,avgVoidMSE]
+    #         avgVoidPSNR = np.mean(n2vDat[i][j][' PSNR'])
+    #         avgVoidSSIM = np.mean(n2vDat[i][j][' SSIM'])
+    #         avgVoidMSE = np.mean(n2vDat[i][j][' MSE'])
+    #         avgVoid[scanNum,:]=[avgVoidPSNR,avgVoidSSIM,avgVoidMSE]
             
-            avgLinePSNR = np.mean(line2lineDat[i][j][' PSNR'])
-            avgLineSSIM = np.mean(line2lineDat[i][j][' SSIM'])
-            avgLineMSE = np.mean(line2lineDat[i][j][' MSE'])
-            avgLine[scanNum,:]=[avgLinePSNR,avgLineSSIM,avgLineMSE]
+    #         avgLinePSNR = np.mean(line2lineDat[i][j][' PSNR'])
+    #         avgLineSSIM = np.mean(line2lineDat[i][j][' SSIM'])
+    #         avgLineMSE = np.mean(line2lineDat[i][j][' MSE'])
+    #         avgLine[scanNum,:]=[avgLinePSNR,avgLineSSIM,avgLineMSE]
             
-            scanNum+=1
-    #Then plot the average of each patient       
-    fig,ax = plt.subplots(1,3,figsize=(10,7))
-    ax[0].errorbar(spacing[0],np.mean(avgClean,0)[0],yerr=np.std(avgClean,0)[0],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
-    ax[0].errorbar(spacing[1],np.mean(avgNext,0)[0],yerr=np.std(avgNext,0)[0],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
-    ax[0].errorbar(spacing[2],np.mean(avgVoid,0)[0],yerr=np.std(avgVoid,0)[0],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
-    ax[0].errorbar(spacing[3],np.mean(avgLine,0)[0],yerr=np.std(avgLine,0)[0],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
-    ax[0].set_title(r'Peak SNR$\uparrow$')
-    ax[0].set_ylabel('PSNR (dB)')
-    ax[0].set_xticks(spacing)
-    ax[0].set_xticklabels(['Sup.','N2Nyq','N2V','L2L'],rotation=35)
+    #         scanNum+=1
+    # #Then plot the average of each patient       
+    # fig,ax = plt.subplots(1,3,figsize=(10,7))
+    # ax[0].errorbar(spacing[0],np.mean(avgClean,0)[0],yerr=np.std(avgClean,0)[0],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
+    # ax[0].errorbar(spacing[1],np.mean(avgNext,0)[0],yerr=np.std(avgNext,0)[0],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
+    # ax[0].errorbar(spacing[2],np.mean(avgVoid,0)[0],yerr=np.std(avgVoid,0)[0],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
+    # ax[0].errorbar(spacing[3],np.mean(avgLine,0)[0],yerr=np.std(avgLine,0)[0],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
+    # ax[0].set_title(r'Peak SNR$\uparrow$')
+    # ax[0].set_ylabel('PSNR (dB)')
+    # ax[0].set_xticks(spacing)
+    # ax[0].set_xticklabels(['Sup.','N2Nyq','N2V','L2L'],rotation=35)
     
-    ax[1].errorbar(spacing[0],np.mean(avgClean,0)[1],yerr=np.std(avgClean,0)[1],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
-    ax[1].errorbar(spacing[1],np.mean(avgNext,0)[1],yerr=np.std(avgNext,0)[1],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
-    ax[1].errorbar(spacing[2],np.mean(avgVoid,0)[1],yerr=np.std(avgVoid,0)[1],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
-    ax[1].errorbar(spacing[3],np.mean(avgLine,0)[1],yerr=np.std(avgLine,0)[1],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
-    ax[1].set_title(r'Structural Similarity$\uparrow$')
-    ax[1].set_ylabel('SSIM')
-    ax[1].set_xticks(spacing)
-    ax[1].set_xticklabels(['Sup.','N2Nyq','N2V','L2L'],rotation=35)
+    # ax[1].errorbar(spacing[0],np.mean(avgClean,0)[1],yerr=np.std(avgClean,0)[1],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
+    # ax[1].errorbar(spacing[1],np.mean(avgNext,0)[1],yerr=np.std(avgNext,0)[1],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
+    # ax[1].errorbar(spacing[2],np.mean(avgVoid,0)[1],yerr=np.std(avgVoid,0)[1],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
+    # ax[1].errorbar(spacing[3],np.mean(avgLine,0)[1],yerr=np.std(avgLine,0)[1],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
+    # ax[1].set_title(r'Structural Similarity$\uparrow$')
+    # ax[1].set_ylabel('SSIM')
+    # ax[1].set_xticks(spacing)
+    # ax[1].set_xticklabels(['Sup.','N2Nyq','N2V','L2L'],rotation=35)
      
-    ax[2].errorbar(spacing[0],np.mean(avgClean,0)[2],yerr=np.std(avgClean,0)[2],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
-    ax[2].errorbar(spacing[1],np.mean(avgNext,0)[2],yerr=np.std(avgNext,0)[2],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
-    ax[2].errorbar(spacing[2],np.mean(avgVoid,0)[2],yerr=np.std(avgVoid,0)[2],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
-    ax[2].errorbar(spacing[3],np.mean(avgLine,0)[2],yerr=np.std(avgLine,0)[2],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
-    ax[2].set_title(r'Error$\downarrow$')
-    ax[2].set_ylabel('MSE (AU)')
-    ax[2].set_xticks(spacing)
-    ax[2].set_xticklabels(['Sup.','N2Nyq','N2V','L2L'],rotation=35)
-    plt.tight_layout()
-    plt.savefig('../../communications/paper/figures/ct/CTMetrics.png')
+    # ax[2].errorbar(spacing[0],np.mean(avgClean,0)[2],yerr=np.std(avgClean,0)[2],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
+    # ax[2].errorbar(spacing[1],np.mean(avgNext,0)[2],yerr=np.std(avgNext,0)[2],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
+    # ax[2].errorbar(spacing[2],np.mean(avgVoid,0)[2],yerr=np.std(avgVoid,0)[2],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
+    # ax[2].errorbar(spacing[3],np.mean(avgLine,0)[2],yerr=np.std(avgLine,0)[2],fmt='o',capsize=5,markersize=12,elinewidth=3,capthick=3)
+    # ax[2].set_title(r'Error$\downarrow$')
+    # ax[2].set_ylabel('MSE (AU)')
+    # ax[2].set_xticks(spacing)
+    # ax[2].set_xticklabels(['Sup.','N2Nyq','N2V','L2L'],rotation=35)
+    # plt.tight_layout()
+    # plt.savefig('../../results/ct/figures/CTMetrics.png')
     
     ######################
     #Version 2 with Seaborn
@@ -226,19 +230,22 @@ if __name__ == '__main__':
     supervisedFlat = [item for sublist in cleanDat for item in sublist]  
     n2nyqFlat = [item for sublist in nextDat for item in sublist]
     n2vFlat = [item for sublist in n2vDat for item in sublist]
+    ne2neFlat = [item for sublist in ne2neDat for item in sublist]
     #Add method column
     for i in range(len(supervisedFlat)):
         supervisedFlat[i]['Method'] = 'Supervised'
         n2nyqFlat[i]['Method'] = 'noise2Nyquist'
         n2vFlat[i]['Method'] = 'noise2void'
+        ne2neFlat[i]['Method'] = 'neighbor2neighbor'
     #Concatenate all patients    
     allSupDF = pd.concat(supervisedFlat)
     alln2nDF = pd.concat(n2nyqFlat)
     alln2vDF = pd.concat(n2vFlat)
+    allne2neDF = pd.concat(ne2neFlat)
     #Define patients to plot all data for
-    patientsToPlot= ['L067','L096','L109','L143']
+    patientsToPlot= ['L067','L096','L109']
     #Make dataframe of all data
-    allDatDF = pd.concat((allSupDF,alln2nDF,alln2vDF))
+    allDatDF = pd.concat((allSupDF,alln2nDF,alln2vDF,allne2neDF))
     #Subset dataframe to multiple patients
     boolList = allDatDF.Patient.isin(patientsToPlot)
     someScansDF = allDatDF[boolList]
@@ -255,27 +262,27 @@ if __name__ == '__main__':
      l.set_alpha(0.8)
     for l in p.lines[1::3]:
         l.set_linestyle('-')
-    plt.savefig('../../communications/paper/figures/ct/patientResults.png')
+    plt.savefig('../../results/ct/figures/patientResults.png')
     
     #Calculate mean values for each patient and method
     volDF=allDatDF.groupby(['Patient','Method']).mean()
     volDF.reset_index(inplace=True)
     
     #Make boxplots
-    fig,ax=plt.subplots(1,3,figsize=(10.5,6))
-    p1=sns.boxplot(x='Method',y=' PSNR',data=volDF,ax=ax[0],palette='Set2',width=.6,fliersize=0)
-    sns.swarmplot(x='Method',y=' PSNR',data=volDF,ax=ax[0],color=".25",size=6)
-    sns.boxplot(x='Method',y=' SSIM',data=volDF,ax=ax[1],palette='Set2',width=.6,fliersize=0)   
-    sns.swarmplot(x='Method',y=' SSIM',data=volDF,ax=ax[1],color=".25",size=6)
-    sns.boxplot(x='Method',y=' MSE',data=volDF,ax=ax[2],palette='Set2',width=.6,fliersize=0)
-    sns.swarmplot(x='Method',y=' MSE',data=volDF,ax=ax[2],color=".25",size=6)
-    ax[0].set_xticklabels(['Sup','n2Nyq.','n2v'])
-    ax[1].set_xticklabels(['Sup.','n2Nyq.','n2v'])
-    ax[2].set_xticklabels(['Sup.','n2Nyq.','n2v'])
+    fig,ax=plt.subplots(1,2,figsize=(10.5,6))
+    p1=sns.boxplot(x='Method',y=' PSNR',data=volDF,ax=ax[0],palette='Set2',width=.6,fliersize=0,order=['Supervised','noise2Nyquist','noise2void','neighbor2neighbor'])
+    sns.swarmplot(x='Method',y=' PSNR',data=volDF,ax=ax[0],color=".25",size=6,order=['Supervised','noise2Nyquist','noise2void','neighbor2neighbor'])
+    sns.boxplot(x='Method',y=' SSIM',data=volDF,ax=ax[1],palette='Set2',width=.6,fliersize=0,order=['Supervised','noise2Nyquist','noise2void','neighbor2neighbor'])   
+    sns.swarmplot(x='Method',y=' SSIM',data=volDF,ax=ax[1],color=".25",size=6,order=['Supervised','noise2Nyquist','noise2void','neighbor2neighbor'])
+    #sns.boxplot(x='Method',y=' MSE',data=volDF,ax=ax[2],palette='Set2',width=.6,fliersize=0)
+    #sns.swarmplot(x='Method',y=' MSE',data=volDF,ax=ax[2],color=".25",size=6)
+    ax[0].set_xticklabels(['Sup','n2Nyq.','n2v','ne2ne'])
+    ax[1].set_xticklabels(['Sup.','n2Nyq.','n2v','ne2ne'])
+    #ax[2].set_xticklabels(['Sup.','n2Nyq.','n2v'])
     ax[0].set_title(r'Peak SNR$\uparrow$')
     ax[1].set_title(r'Structural Similarity$\uparrow$')
-    ax[2].set_title(r'Error$\downarrow$')
+    #ax[2].set_title(r'Error$\downarrow$')
     ax[0].set_ylabel('PSNR (dB)')
     plt.tight_layout()
-    plt.savefig('../../communications/paper/figures/ct/aggregateResults.png')
+    plt.savefig('../../results/ct/figures/aggregateResults.png')
     

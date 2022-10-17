@@ -31,6 +31,7 @@ if __name__ == '__main__':
     nextTarg = pd.read_csv('../../results/phantom/2022-06-29--12-15-22/00/testResults_last.csv')
     noisyTarg = pd.read_csv('../../results/phantom/2022-06-29--12-50-44/00/testResults_last.csv')
     n2vTarg = pd.read_csv('../../results/phantom/2022-06-29--12-41-28/00/testResults_last.csv')
+    neigh2neigh = pd.read_csv('../../results/phantom/neigh2neigh/2022-10-17-12-04/00/testResults_last.csv')
     n2nyqSingle = pd.read_csv('../../results/phantom/2022-06-29--12-32-07/00/testResults_last.csv')
     n2nyqO2 = pd.read_csv('../../results/phantom/2022-06-29--12-22-34/00/testResults_last.csv')
     n2nyqO3 = pd.read_csv('../../results/phantom/2022-06-29--12-26-37/00/testResults_last.csv')
@@ -43,12 +44,13 @@ if __name__ == '__main__':
     n2NyquistDF = pd.DataFrame({'Method':'noise2Nyq','PSNR':nextTarg[' PSNR'], 'SSIM':nextTarg[' SSIM'],'MSE':nextTarg[' MSE']})
     n2nDF = pd.DataFrame({'Method':'noise2noise','PSNR':noisyTarg[' PSNR'], 'SSIM':noisyTarg[' SSIM'],'MSE':noisyTarg[' MSE']})
     n2vDF = pd.DataFrame({'Method':'noise2void','PSNR':n2vTarg[' PSNR'], 'SSIM':n2vTarg[' SSIM'],'MSE':n2vTarg[' MSE']})
+    ne2neDF = pd.DataFrame({'Method':'ne2ne','PSNR':neigh2neigh[' PSNR'], 'SSIM':neigh2neigh[' SSIM'], 'MSE':neigh2neigh[' MSE']})
     n2NyqO2DF = pd.DataFrame({'Method':'Nyq./2','PSNR':n2nyqO2[' PSNR'], 'SSIM':n2nyqO2[' SSIM'],'MSE':n2nyqO2[' MSE']})
     n2NyqO3DF = pd.DataFrame({'Method':'Nyq./3','PSNR':n2nyqO3[' PSNR'], 'SSIM':n2nyqO3[' SSIM'],'MSE':n2nyqO3[' MSE']})
     n2NyqO4DF = pd.DataFrame({'Method':'Nyq./4','PSNR':n2nyqO4[' PSNR'], 'SSIM':n2nyqO4[' SSIM'],'MSE':n2nyqO4[' MSE']})
-    n2Nyqx2DF = pd.DataFrame({'Method':'Nyq.x2','PSNR':n2nyqx2[' PSNR'], 'SSIM':n2nyqx2[' SSIM'],'MSE':n2nyqx2[' MSE']})
-    n2Nyqx4DF = pd.DataFrame({'Method':'Nyq.x4','PSNR':n2nyqx4[' PSNR'], 'SSIM':n2nyqx4[' SSIM'],'MSE':n2nyqx4[' MSE']})
-    phantomDF = pd.concat((supervisedDF,n2NyquistDF,n2nDF,n2vDF,n2NyqO2DF,n2NyqO3DF,n2NyqO4DF,n2Nyqx2DF,n2Nyqx4DF))
+    #n2Nyqx2DF = pd.DataFrame({'Method':'Nyq.x2','PSNR':n2nyqx2[' PSNR'], 'SSIM':n2nyqx2[' SSIM'],'MSE':n2nyqx2[' MSE']})
+    #n2Nyqx4DF = pd.DataFrame({'Method':'Nyq.x4','PSNR':n2nyqx4[' PSNR'], 'SSIM':n2nyqx4[' SSIM'],'MSE':n2nyqx4[' MSE']})
+    phantomDF = pd.concat((supervisedDF,n2NyquistDF,n2nDF,n2vDF,n2NyqO2DF,n2NyqO3DF,n2NyqO4DF))#,n2Nyqx2DF,n2Nyqx4DF))
    
     #Try plotting with jitter (like a strip plot)
     datShape = cleanTarg[' PSNR'].shape[0]
@@ -111,7 +113,23 @@ if __name__ == '__main__':
     
     #Now use seaborn to make cool swarmplots
     fig,ax = plt.subplots(1,2,figsize=(16,8))
-    sns.swarmplot(x='Method',y='SSIM',data=phantomDF,ax=ax[0],size=4)
+    sns.swarmplot(x='Method',y='PSNR',data=phantomDF,ax=ax[0],size=3.5)
+    # plot the mean line
+    sns.boxplot(showmeans=True,
+                meanline=True,
+                meanprops={'color': 'k', 'ls': '-', 'lw': 4},
+                medianprops={'visible': False},
+                whiskerprops={'visible': False},
+                zorder=10,
+                x="Method",
+                y="PSNR",
+                data=phantomDF,
+                showfliers=False,
+                showbox=False,
+                showcaps=False,
+                width=0.6,
+                ax=ax[0])
+    sns.swarmplot(x='Method',y='SSIM',data=phantomDF,ax=ax[1],size=3.5)
     # plot the mean line
     sns.boxplot(showmeans=True,
                 meanline=True,
@@ -126,27 +144,11 @@ if __name__ == '__main__':
                 showbox=False,
                 showcaps=False,
                 width=0.6,
-                ax=ax[0])
-    sns.swarmplot(x='Method',y='MSE',data=phantomDF,ax=ax[1],size=4)
-    # plot the mean line
-    sns.boxplot(showmeans=True,
-                meanline=True,
-                meanprops={'color': 'k', 'ls': '-', 'lw': 4},
-                medianprops={'visible': False},
-                whiskerprops={'visible': False},
-                zorder=10,
-                x="Method",
-                y="MSE",
-                data=phantomDF,
-                showfliers=False,
-                showbox=False,
-                showcaps=False,
-                width=0.6,
                 ax=ax[1])
     ax[0].set_xticklabels(ax[0].get_xticklabels(),rotation = 20,ha='right')
     ax[1].set_xticklabels(ax[1].get_xticklabels(),rotation = 20,ha='right')
-    ax[0].set_title('Phantom Denoising Similarity')
-    ax[1].set_title('Phantom Denoising Error')
+    ax[0].set_title('Phantom Denoising Peak SNR')
+    ax[1].set_title('Phantom Denoising Similarity')
     plt.tight_layout()
     plt.savefig('../../results/phantom/figures/phantomQuantSwarm.png')
     

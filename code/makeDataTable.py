@@ -279,6 +279,7 @@ if __name__ == '__main__':
     noise2NyquistFCMAvg, noise2NyquistFCMStd = getSummaryStats(noise2NyquistFCMResults)
     noise2VoidFCMAvg, noise2VoidFCMStd = getSummaryStats(noise2VoidFCMResults)
     line2LineFCMAvg, line2LineFCMStd = getSummaryStats(line2LineFCMResults)
+    neigh2neighFCMAvg,neigh2neighFCMStd = getSummaryStats(neigh2neighFCMResults)
     
     noisyFCMAvg, noisyFCMStd = getConventionalStats(convenDirFCM,'none0')
     medianFCMAvg, medianFCMStd = getConventionalStats(convenDirFCM,'median3')
@@ -407,17 +408,18 @@ if __name__ == '__main__':
     #Collect FCM data into nice dataframe to copy to table
     ########################################
     FCMStatsDF = pd.DataFrame({'Method':[],'avgPSNR':[],'stdPSNR':[],'avgSSIM':[],'stdSSIM':[],'avgMSE':[],'stdMSE':[]})
-    FCMStatsDF['Method']=['Noisy','Supervised','noise2Nyquist','noise2void',
+    FCMStatsDF['Method']=['Noisy','Supervised','noise2Nyquist','noise2void','neighbor2neighbor',
                           'Median','Gaussian','Stack Avg.','BM3D','BM4D']
     FCMStatsDF.iloc[0,1::] = [val for pair in zip(noisyFCMAvg, noisyFCMStd) for val in pair]
     FCMStatsDF.iloc[1,1::] = [val for pair in zip(supervisedFCMAvg, supervisedFCMStd) for val in pair]
     FCMStatsDF.iloc[2,1::] = [val for pair in zip(noise2NyquistFCMAvg, noise2NyquistFCMStd) for val in pair]
     FCMStatsDF.iloc[3,1::] = [val for pair in zip(noise2VoidFCMAvg, noise2VoidFCMStd) for val in pair]
-    FCMStatsDF.iloc[4,1::] = [val for pair in zip(medianFCMAvg, medianFCMStd) for val in pair]
-    FCMStatsDF.iloc[5,1::] = [val for pair in zip(gaussianFCMAvg, gaussianFCMStd) for val in pair]
-    FCMStatsDF.iloc[6,1::] = [val for pair in zip(oof3FCMAvg, oof3FCMStd) for val in pair]
-    FCMStatsDF.iloc[7,1::] = [val for pair in zip(bm3dFCMAvg, bm3dFCMStd) for val in pair]
-    FCMStatsDF.iloc[8,1::] = [val for pair in zip(bm4dFCMAvg, bm4dFCMStd) for val in pair]
+    FCMStatsDF.iloc[4,1::] = [val for pair in zip(neigh2neighFCMAvg,neigh2neighFCMStd) for val in pair]
+    FCMStatsDF.iloc[5,1::] = [val for pair in zip(medianFCMAvg, medianFCMStd) for val in pair]
+    FCMStatsDF.iloc[6,1::] = [val for pair in zip(gaussianFCMAvg, gaussianFCMStd) for val in pair]
+    FCMStatsDF.iloc[7,1::] = [val for pair in zip(oof3FCMAvg, oof3FCMStd) for val in pair]
+    FCMStatsDF.iloc[8,1::] = [val for pair in zip(bm3dFCMAvg, bm3dFCMStd) for val in pair]
+    FCMStatsDF.iloc[9,1::] = [val for pair in zip(bm4dFCMAvg, bm4dFCMStd) for val in pair]
              
     ########################################
     #Collect CT data into nice dataframe to copy to table

@@ -42,28 +42,35 @@ if __name__ == '__main__':
     #Empty dataframes
     n2nyqDF = pd.DataFrame({'Method':[],'Volume':[],'Frame':[],'NIQI':[]})
     n2voidDF = pd.DataFrame({'Method':[],'Volume':[],'Frame':[],'NIQI':[]})
+    ne2neDF = pd.DataFrame({'Method':[],'Volume':[],'Frame':[],'NIQI':[]})
     #Fill out the NIQI ratio, method, volume, and frame to the data
     n2nyqDF['NIQI'] = MLDat[0,:,:].flatten()
     n2voidDF['NIQI'] = MLDat[1,:,:].flatten()
+    ne2neDF['NIQI'] = MLDat[2,:,:].flatten()
     n2nyqDF['Method']='noise2Nyquist'
     n2voidDF['Method'] = 'noise2void'
+    ne2neDF['Method'] = 'neighbor2neighbor'
     n2nyqDF['Volume'] = volumeList.flatten()
     n2voidDF['Volume'] = volumeList.flatten()
+    ne2neDF['Volume'] = volumeList.flatten()
     n2nyqDF['Frame'] = frameList.flatten()
     n2voidDF['Frame'] = frameList.flatten()
+    ne2neDF['Frame'] = frameList.flatten()
     
     #Concatenate both ML methods
-    MLdf = pd.concat((n2nyqDF,n2voidDF))
+    MLdf = pd.concat((n2nyqDF,n2voidDF,ne2neDF))
     #filter dataframe by these volumes
-    volsToPlot = [0,5,10,15,20,25,30]
+    volsToPlot = [0,5,10,15]
     boolList = MLdf.Volume.isin(volsToPlot)
     someScansDF = MLdf[boolList]
     
     #Plot the violins
+    pal = sns.color_palette('Set2')
+    pal = pal[1::]
     fig,ax = plt.subplots(1,1,figsize=(10.5,6))
     ax.set_title('OCT Denoising Results')
-    p=sns.violinplot(x='Volume',y='NIQI',hue='Method',data=someScansDF,ax=ax,inner='quartile',palette = 'Set2')
-    plt.legend(loc='best')
+    p=sns.violinplot(x='Volume',y='NIQI',hue='Method',data=someScansDF,ax=ax,inner='quartile',palette = pal)
+    plt.legend(loc='upper left')
     ax.set_xlabel('Volume Number')
     for l in p.lines:
      l.set_linestyle(':')
@@ -72,20 +79,20 @@ if __name__ == '__main__':
      l.set_alpha(0.8)
     for l in p.lines[1::3]:
         l.set_linestyle('-')
-    plt.savefig('../../communications/paper/figures/oct/scanByScanResults.png')
+    plt.savefig('../../results/oct/figures/scanByScanResults.png')
     
     #Calculate aggregate averages
     volDF=MLdf.groupby(['Volume','Method']).mean()
     volDF.reset_index(inplace=True)
     #Plot the barplots
     fig,ax=plt.subplots(1,1,figsize=(10.5,6))
-    p1=sns.boxplot(x='Method',y='NIQI',data=volDF,ax=ax,palette='Set2',width=.6,fliersize=0)
-    sns.swarmplot(x='Method',y='NIQI',data=volDF,ax=ax,color=".25",size=8)
-    ax.set_xticklabels(['noise2Nyquist.','noise2void'])
+    p1=sns.boxplot(x='Method',y='NIQI',data=volDF,ax=ax,palette=pal,width=.6,fliersize=0,order=['noise2Nyquist','noise2void','neighbor2neighbor'])
+    sns.swarmplot(x='Method',y='NIQI',data=volDF,ax=ax,color=".25",size=8,order=['noise2Nyquist','noise2void','neighbor2neighbor'])
+    ax.set_xticklabels(['noise2Nyquist.','noise2void','neighbor2neighbor'])
     ax.set_title(r'Naturalness Image Index$\downarrow$')
     ax.set_ylabel('NIQI ratio')
     plt.tight_layout()
-    plt.savefig('../../communications/paper/figures/oct/aggregateResults.png')
+    plt.savefig('../../results/oct/figures/aggregateResults.png')
     
     
     

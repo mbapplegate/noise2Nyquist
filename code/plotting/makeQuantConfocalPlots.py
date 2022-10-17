@@ -63,6 +63,7 @@ if __name__ == '__main__':
     nextTargDir  = '../../results/confocal/2022-07-18--11-41-04'
     n2vTargDir   = '../../results/confocal/2022-07-18--11-48-01'
     line2lineDir = '../../results/confocal/2022-07-18--12-04-06'
+    neigh2neighDir='../../results/confocal/neigh2neigh/2022-10-14-14-35'
     #Scans to plot individually
     scansToPlot=[0,3,6,9]
     #folds to consider when plotting aggregates
@@ -72,6 +73,7 @@ if __name__ == '__main__':
     nextDat = []
     n2vDat = []
     line2lineDat = []
+    ne2neDat=[]
     totalScans = 0
     #Read in data from each of the folds and fill a list where first idx is fold and second idx is volume
     for f in folds:
@@ -87,6 +89,9 @@ if __name__ == '__main__':
         
         truncL2L=pd.read_csv(os.path.join(line2lineDir,'%02d'%f,'testResults_last.csv'))
         line2lineDat.append(getScanResults(truncL2L))
+        
+        truncNe2Ne=pd.read_csv(os.path.join(neigh2neighDir,'%02d'%f,'testResults_last.csv'))
+        ne2neDat.append(getScanResults(truncNe2Ne))
         
         totalScans += len(cleanResults)
     #Flatten list to calculate number of volumes
@@ -109,6 +114,7 @@ if __name__ == '__main__':
             nyqbox=ax.boxplot(nextDat[i][j][' SSIM'],positions=[trueMeanVal+spacing[1]],labels=[''],patch_artist=True)
             voidbox=ax.boxplot(n2vDat[i][j][' SSIM'],positions=[trueMeanVal+spacing[2]],labels=[''],patch_artist=True)
             linebox=ax.boxplot(line2lineDat[i][j][' SSIM'],positions=[trueMeanVal+spacing[3]],labels=[''],patch_artist=True)
+            #nebox = ax.boxplot(ne2neDat[i][j][' SSIM'],positions=[trueMeanVal+spacing[3]])
             cbox['boxes'][0].set_facecolor('tab:blue')
             cbox['fliers'][0].set_markerfacecolor('tab:blue')
             [w.set_color('gray') for w in cbox['whiskers']]
@@ -155,7 +161,7 @@ if __name__ == '__main__':
     ax.set_title('Confocal Denoising Results')
   
     plt.tight_layout()
-    plt.savefig('../../communications/paper/figures/confocal/confocalScanQuant.png')
+    plt.savefig('../../results/confocal/figures/confocalScanQuant.png')
     
     #Average the patient wise data to plot mean and std over volumes
     avgClean = np.zeros((numPatients,3))
@@ -215,7 +221,7 @@ if __name__ == '__main__':
     ax[2].set_xticks(spacing)
     ax[2].set_xticklabels(['Sup.','N2Nyq','N2V','L2L'],rotation=15)
     plt.tight_layout()
-    plt.savefig('../../communications/paper/figures/confocal/confocalMetrics.png')  
+    plt.savefig('../../results/confocal/figures/confocalMetrics.png')  
     
     #######################
     #Version 2 using seaborn
@@ -224,19 +230,22 @@ if __name__ == '__main__':
     supervisedFlat = [item for sublist in cleanDat for item in sublist]  
     n2nyqFlat = [item for sublist in nextDat for item in sublist]
     n2vFlat = [item for sublist in n2vDat for item in sublist]
+    ne2neFlat = [item for sublist in ne2neDat for item in sublist]
     
     #Add method column
     for i in range(len(supervisedFlat)):
         supervisedFlat[i]['Method'] = 'Supervised'
         n2nyqFlat[i]['Method'] = 'noise2Nyquist'
         n2vFlat[i]['Method'] = 'noise2void'
+        ne2neFlat[i]['Method']='neighbor2neighbor'
     
     #Concatenate all resulting lists
     allSupDF = pd.concat(supervisedFlat)
     alln2nDF = pd.concat(n2nyqFlat)
     alln2vDF = pd.concat(n2vFlat)
+    allne2neDF=pd.concat(ne2neFlat)
     #Concatenate all data into a single dataframe
-    allDatDF = pd.concat((allSupDF,alln2nDF,alln2vDF))
+    allDatDF = pd.concat((allSupDF,alln2nDF,alln2vDF,allne2neDF))
     #Subset dataframe to just the scans to make violin plots for
     boolList = allDatDF.Scan.isin(scansToPlot)
     someScansDF = allDatDF[boolList]
@@ -254,27 +263,27 @@ if __name__ == '__main__':
      l.set_alpha(0.8)
     for l in p.lines[1::3]:
         l.set_linestyle('-')
-    plt.savefig('../../communications/paper/figures/confocal/scanByScanResults.png')
+    plt.savefig('../../results/confocal/figures/scanByScanResults.png')
     
     #Calculate means of metrics (look how easy this is!)
     volDF=allDatDF.groupby(['Scan','Method']).mean()
     volDF.reset_index(inplace=True)
     #Plot the boxplots
-    fig,ax=plt.subplots(1,3,figsize=(10.5,6))
-    p1=sns.boxplot(x='Method',y=' PSNR',data=volDF,ax=ax[0],palette='Set2',width=.6,fliersize=0)
-    sns.swarmplot(x='Method',y=' PSNR',data=volDF,ax=ax[0],color=".25",size=6)
-    sns.boxplot(x='Method',y=' SSIM',data=volDF,ax=ax[1],palette='Set2',width=.6,fliersize=0)   
-    sns.swarmplot(x='Method',y=' SSIM',data=volDF,ax=ax[1],color=".25",size=6)
-    sns.boxplot(x='Method',y=' MSE',data=volDF,ax=ax[2],palette='Set2',width=.6,fliersize=0)
-    sns.swarmplot(x='Method',y=' MSE',data=volDF,ax=ax[2],color=".25",size=6)
-    ax[0].set_xticklabels(['Sup','n2Nyq.','n2v'])
-    ax[1].set_xticklabels(['Sup.','n2Nyq.','n2v'])
-    ax[2].set_xticklabels(['Sup.','n2Nyq.','n2v'])
+    fig,ax=plt.subplots(1,2,figsize=(10.5,6))
+    p1=sns.boxplot(x='Method',y=' PSNR',data=volDF,ax=ax[0],palette='Set2',width=.6,fliersize=0,order=['Supervised','noise2Nyquist','noise2void','neigh2neigh'])
+    sns.swarmplot(x='Method',y=' PSNR',data=volDF,ax=ax[0],color=".25",size=5,order=['Supervised','noise2Nyquist','noise2void','neigh2neigh'])
+    sns.boxplot(x='Method',y=' SSIM',data=volDF,ax=ax[1],palette='Set2',width=.6,fliersize=0,order=['Supervised','noise2Nyquist','noise2void','neigh2neigh'])   
+    sns.swarmplot(x='Method',y=' SSIM',data=volDF,ax=ax[1],color=".25",size=5,order=['Supervised','noise2Nyquist','noise2void','neigh2neigh'])
+    #sns.boxplot(x='Method',y=' MSE',data=volDF,ax=ax[2],palette='Set2',width=.6,fliersize=0)
+    #sns.swarmplot(x='Method',y=' MSE',data=volDF,ax=ax[2],color=".25",size=4)
+    ax[0].set_xticklabels(['Sup','n2Nyq.','n2v','ne2ne'])
+    ax[1].set_xticklabels(['Sup.','n2Nyq.','n2v','ne2ne'])
+    #ax[2].set_xticklabels(['Sup.','n2Nyq.','n2v','ne2ne'])
     ax[0].set_title(r'Peak SNR$\uparrow$')
     ax[1].set_title(r'Structural Similarity$\uparrow$')
-    ax[2].set_title(r'Error$\downarrow$')
+    #ax[2].set_title(r'Error$\downarrow$')
     ax[0].set_ylabel('PSNR (dB)')
     plt.tight_layout()
-    plt.savefig('../../communications/paper/figures/confocal/aggregateResults.png')
+    plt.savefig('../../results/confocal/figures/aggregateResults.png')
         
 
