@@ -285,7 +285,7 @@ def test(dataloader,model,device,logdir,dataType='oct',sampMean=0,sampStd=1,clea
         model.eval()
         #Iterate through all data
         for i, batch in enumerate(dataloader):
-            print("Working on image %d of %d"%(i+1,len(dataloader)))
+            print("Working on: %s image %d of %d"%(batch[-1][0],(i+1),len(dataloader)))
             #For validation, the target will always be at index 0 and input at index 1
             if dataType == 'phantom':
                 imNameNpy = 'phantomFrame%03d.npy'%i

@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
 from utils.arch_unet import UNet
+import utils.utilsOOP as utils
 
 
 parser = argparse.ArgumentParser()
@@ -346,74 +347,128 @@ def calculate_psnr(target, ref):
 
 if __name__ == '__main__':
     
-    if opt.dataType=='oct':
+    if opt.dataType == 'phantom':
+        # Training Set
+        transformer = transforms.Compose([utils.ToTensor()])
+        TrainingDataset = utils.SheppLoganDataset('./HRPhantomData/SheppLoganPhan.mat',
+                                                  nyquistSampling=4,
+                                                  sampMult=1,
+                                                  noiseStd=45,
+                                                  nextImage=False,
+                                                  singleImTrain=True,
+                                                  transform=transformer,
+                                                  noiseType='additive')
+        TrainingLoader = DataLoader(dataset=TrainingDataset,
+                                    num_workers=8,
+                                    batch_size=opt.batchsize,
+                                    shuffle=True,
+                                    pin_memory=False,
+                                    drop_last=True)
+        valDataset = utils.SheppLoganDataset('./HRPhantomData/YuYeWangPhan.mat',
+                                             nyquistSampling=4,
+                                             sampMult=1,
+                                             noiseStd=45,
+                                             nextImage=False,
+                                             singleImTrain=True,
+                                             transform=transformer,
+                                             noiseType='additive')
+        valLoader = DataLoader(dataset=valDataset,
+                               num_workers=8,
+                               batch_size=opt.batchsize,
+                               shuffle=False,
+                               pin_memory=False,
+                               drop_last=True)
+    else:
         
-        testNums = [[11,31,28,8], [6,15,25,2],
-                        [5,27,24,14], [9,26,16,7],
-                        [19,34,29,23],[18,35,13,30],
-                        [17,22],[1,12,3],[32,20,33],
-                        [0,21,4]]
-        trainNums = []
-        for i in range(len(testNums)):
-            allNums = np.arange(36,dtype='int32')
-            temp=testNums[i].copy()
-            temp.append(10)
-            foldNums=np.delete(allNums,np.array(temp,dtype='int32'))
-            trainNums.append(foldNums)
-        
-        trainPath = []
-        testPath = []
-        for i in range(len(trainNums[opt.fold_number])):
-            trainPath.append(os.path.join(opt.data_dir,'%02d'%trainNums[opt.fold_number][i]))
-        for j in range(len(testNums[opt.fold_number])):
-            testPath.append(os.path.join(opt.data_dir,'%02d'%testNums[opt.fold_number][j]))
+        if opt.dataType=='oct':
             
+            testNums = [[11,31,28,8], [6,15,25,2],
+                            [5,27,24,14], [9,26,16,7],
+                            [19,34,29,23],[18,35,13,30],
+                            [17,22],[1,12,3],[32,20,33],
+                            [0,21,4]]
+            trainNums = []
+            for i in range(len(testNums)):
+                allNums = np.arange(36,dtype='int32')
+                temp=testNums[i].copy()
+                temp.append(10)
+                foldNums=np.delete(allNums,np.array(temp,dtype='int32'))
+                trainNums.append(foldNums)
             
-        thisFoldTrainNoisy = trainPath
-        thisFoldTestNoisy = testPath
-        thisFoldTrainClean = None
-        thisFoldTestClean = None
-    
-    if opt.dataType == 'confocal':
-        testVolumes = [[2,5] ,[8,11],[14,1],[9,4],
-                       [7,13],[0,3],[6],[12],[15],[10]]
-    if opt.dataType=='ct':
-        subfoldersNoisy = [f.path for f in os.scandir(os.path.join(opt.data_dir,'current')) if f.is_dir()]
-        subfoldersClean = [f.path for f in os.scandir(os.path.join(opt.data_dir,'clean')) if f.is_dir()]
-        folds = KFold(n_splits=10)
-        trainPatientsNoisy=[]
-        testPatientsNoisy=[]
-        trainPatientsClean=[]
-        testPatientsClean=[]
-        for trainIdx,testIdx in folds.split(subfoldersNoisy):
-            trainPatientsNoisy.append([subfoldersNoisy[i] for i in trainIdx])
-            testPatientsNoisy.append([subfoldersNoisy[i] for i in testIdx])
-            trainPatientsClean.append([subfoldersClean[i] for i in trainIdx])
-            testPatientsClean.append([subfoldersClean[i] for i in testIdx])
+            trainPath = []
+            testPath = []
+            for i in range(len(trainNums[opt.fold_number])):
+                trainPath.append(os.path.join(opt.data_dir,'%02d'%trainNums[opt.fold_number][i]))
+            for j in range(len(testNums[opt.fold_number])):
+                testPath.append(os.path.join(opt.data_dir,'%02d'%testNums[opt.fold_number][j]))
+                
+                
+            thisFoldTrainNoisy = trainPath
+            thisFoldTestNoisy = testPath
+            thisFoldTrainClean = None
+            thisFoldTestClean = None
         
-        thisFoldTrainNoisy = trainPatientsNoisy[opt.fold_number]
-        thisFoldTestNoisy = testPatientsNoisy[opt.fold_number]
-        thisFoldTrainClean = trainPatientsClean[opt.fold_number]
-        thisFoldTestClean = testPatientsClean[opt.fold_number]
+        elif opt.dataType == 'confocal':
+            testNums = [[2,5] ,[8,11],[14,1],[9,4],
+                        [7,13],[0,3],[6],[12],[15],[10]]
+            trainNums = []
+            for i in range(len(testNums)):
+                allNums = np.arange(16,dtype='int32')
+                foldNums=np.delete(allNums,np.array(np.array(testNums[i]).astype('int32')))
+                trainNums.append(foldNums)
     
-    # Training Set
-    TrainingDataset = DataLoader_Imagenet_val(thisFoldTrainNoisy,thisFoldTrainClean, patch=opt.patchsize)
-    TrainingLoader = DataLoader(dataset=TrainingDataset,
-                                num_workers=8,
-                                batch_size=opt.batchsize,
-                                shuffle=True,
-                                pin_memory=False,
-                                drop_last=True)
-    valDataset = DataLoader_Imagenet_val(thisFoldTestNoisy,thisFoldTestClean,patch=opt.patchsize)
-    indicies = range(len(valDataset))
-    subsetIdxs = np.random.choice(indicies,size=1024)
-    valSubset = torch.utils.data.Subset(valDataset,subsetIdxs)
-    valLoader = DataLoader(dataset=valSubset,
-                           num_workers=8,
-                           batch_size=opt.batchsize,
-                           shuffle=False,
-                           pin_memory=False,
-                           drop_last=True)
+            testPathNoisy=[]
+            trainPathNoisy=[]
+            testPathClean=[]
+            trainPathClean=[]
+            for i in range(len(trainNums[opt.fold_number])):
+                trainPathNoisy.append(os.path.join(opt.data_dir,'%02d'%trainNums[opt.fold_number][i]))
+                trainPathClean.append(os.path.join(opt.val_dirs,'%02d'%trainNums[opt.fold_number][i]))
+            for i in range(len(testNums[opt.fold_number])):
+                testPathNoisy.append(os.path.join(opt.data_dir,'%02d'%testNums[opt.fold_number][i]))
+                testPathClean.append(os.path.join(opt.val_dirs,'%02d'%testNums[opt.fold_number][i]))
+            thisFoldTrainNoisy=trainPathNoisy
+            thisFoldTestNoisy=testPathNoisy
+            thisFoldTrainClean=trainPathClean
+            thisFoldTestClean=testPathClean
+            
+        elif opt.dataType=='ct':
+            subfoldersNoisy = [f.path for f in os.scandir(os.path.join(opt.data_dir,'current')) if f.is_dir()]
+            subfoldersClean = [f.path for f in os.scandir(os.path.join(opt.data_dir,'clean')) if f.is_dir()]
+            folds = KFold(n_splits=10)
+            trainPatientsNoisy=[]
+            testPatientsNoisy=[]
+            trainPatientsClean=[]
+            testPatientsClean=[]
+            for trainIdx,testIdx in folds.split(subfoldersNoisy):
+                trainPatientsNoisy.append([subfoldersNoisy[i] for i in trainIdx])
+                testPatientsNoisy.append([subfoldersNoisy[i] for i in testIdx])
+                trainPatientsClean.append([subfoldersClean[i] for i in trainIdx])
+                testPatientsClean.append([subfoldersClean[i] for i in testIdx])
+            
+            thisFoldTrainNoisy = trainPatientsNoisy[opt.fold_number]
+            thisFoldTestNoisy = testPatientsNoisy[opt.fold_number]
+            thisFoldTrainClean = trainPatientsClean[opt.fold_number]
+            thisFoldTestClean = testPatientsClean[opt.fold_number]
+        
+        # Training Set
+        TrainingDataset = DataLoader_Imagenet_val(thisFoldTrainNoisy,thisFoldTrainClean, patch=opt.patchsize)
+        TrainingLoader = DataLoader(dataset=TrainingDataset,
+                                    num_workers=8,
+                                    batch_size=opt.batchsize,
+                                    shuffle=True,
+                                    pin_memory=False,
+                                    drop_last=True)
+        valDataset = DataLoader_Imagenet_val(thisFoldTestNoisy,thisFoldTestClean,patch=opt.patchsize)
+        indicies = range(len(valDataset))
+        subsetIdxs = np.random.choice(indicies,size=1024)
+        valSubset = torch.utils.data.Subset(valDataset,subsetIdxs)
+        valLoader = DataLoader(dataset=valSubset,
+                               num_workers=8,
+                               batch_size=opt.batchsize,
+                               shuffle=False,
+                               pin_memory=False,
+                               drop_last=True)
     
     # Noise adder
     noise_adder = AugmentNoise(style=opt.noisetype)
@@ -453,9 +508,13 @@ if __name__ == '__main__':
         network.train()
         for iteration, ims in enumerate(TrainingLoader):
             st = time.time()
-            if len(ims) == 2:
-                clean=ims[1]
-                noisy=ims[0]
+            if len(ims) >= 2:
+                if opt.dataType != 'phantom':
+                    clean=ims[1]
+                    noisy=ims[0]
+                else:
+                    clean=ims[0]
+                    noisy=ims[1]
             else:
                 noisy=ims[0]
                 clean=ims[0]
@@ -509,11 +568,17 @@ if __name__ == '__main__':
             
             for idx, valIms in enumerate(valLoader):
                 for i in range(valIms[0].shape[0]):
-                    if len(valIms) == 2:
-                        origin255 = valIms[1][i,0,:,:] * 255
-                        origin255 = np.expand_dims(origin255,2)
-                        noisy_im = np.array(valIms[0][i,0,:,:], dtype=np.float32)
-                        noisy_im = np.expand_dims(noisy_im,2)
+                    if len(valIms) >= 2:
+                        if opt.dataType != 'phantom':
+                            origin255 = valIms[1][i,0,:,:] * 255
+                            origin255 = np.expand_dims(origin255,2)
+                            noisy_im = np.array(valIms[0][i,0,:,:], dtype=np.float32)
+                            noisy_im = np.expand_dims(noisy_im,2)
+                        else:
+                            origin255 = valIms[0][i,0,:,:] * 255
+                            origin255 = np.expand_dims(origin255,2)
+                            noisy_im = np.array(valIms[1][i,0,:,:], dtype=np.float32)
+                            noisy_im = np.expand_dims(noisy_im,2)
                     else:
                         origin255 = valIms[0][i,0,:,:]* 255
                         origin255 = np.expand_dims(origin255,2)

@@ -176,10 +176,12 @@ if __name__ == '__main__':
     noise2noiseRunPhan =  '2022-06-29--12-50-44'
     noise2voidRunPhan = '2022-06-29--12-41-28'
     line2lineRunPhan = '2022-06-29--12-32-07'
+    neigh2neighRunPhan='2022-10-17-12-04'
     supervisedPhan = pd.read_csv(os.path.join('..','results','phantom',supervisedRunPhan,'00','testResults_last.csv'))
     noise2NyquistPhan = pd.read_csv(os.path.join('..','results','phantom',noise2NyquistRunPhan,'00','testResults_last.csv'))
     noise2noisePhan = pd.read_csv(os.path.join('..','results','phantom',noise2noiseRunPhan,'00','testResults_last.csv'))
     noise2voidPhan = pd.read_csv(os.path.join('..','results','phantom',noise2voidRunPhan,'00','testResults_last.csv'))
+    neigh2neighPhan=pd.read_csv(os.path.join('..','results','phantom','neigh2neigh',neigh2neighRunPhan,'00','testResults_last.csv'))
     line2linePhan = pd.read_csv(os.path.join('..','results','phantom',line2lineRunPhan,'00','testResults_last.csv'))
     convenDirPhan = os.path.join('..','results','phantom','conventional')
    
@@ -194,11 +196,12 @@ if __name__ == '__main__':
     noise2NyquistRunFCM = '2022-07-18--11-41-04'
     noise2voidRunFCM = '2022-07-18--11-48-01'
     line2lineRunFCM = '2022-07-18--12-04-06'
-    
+    neigh2neighRunFCM='2022-10-14-14-35'
     supervisedDirFCM = os.path.join('..','results','confocal',supervisedRunFCM)
     noise2NyquistDirFCM  =  os.path.join('..','results','confocal',noise2NyquistRunFCM)
     noise2VoidDirFCM   = os.path.join('..','results','confocal',noise2voidRunFCM)
     line2lineDirFCM = os.path.join('..','results','confocal',line2lineRunFCM)
+    neigh2neighDirFCM = os.path.join('..','results','confocal','neigh2neigh',neigh2neighRunFCM)
     convenDirFCM =  os.path.join('..','results','confocal','conventional')
     
     ##Computed Tomography data dirs
@@ -223,7 +226,8 @@ if __name__ == '__main__':
     #OCT was actually processed in Matlab by ./analyzeProcessedOCT.m
     noise2NyquistRunOCT='2022-07-15--13-45-14'
     noise2voidRunCT='2022-07-13--17-39-29'
-    line2lineRunCT='2022-07-19--03-17-51'    
+    line2lineRunCT='2022-07-19--03-17-51'
+    neigh2neighRunOCT='2022-10-13-15-33'
     
     #Get all phantom Data
     #Boil everything down to mean +/- standard deviation
@@ -237,6 +241,8 @@ if __name__ == '__main__':
     noise2VoidPhanStd = [np.std(noise2voidPhan[' PSNR']), np.std(noise2voidPhan[' SSIM']), np.std(noise2voidPhan[' MSE'])]
     noise2NoisePhanAvg =  [np.mean(noise2noisePhan[' PSNR']), np.mean(noise2noisePhan[' SSIM']), np.mean(noise2noisePhan[' MSE'])]
     noise2NoisePhanStd =  [np.std(noise2noisePhan[' PSNR']), np.std(noise2noisePhan[' SSIM']), np.std(noise2noisePhan[' MSE'])]
+    neigh2neighPhanAvg=[np.mean(neigh2neighPhan[' PSNR']),np.mean(neigh2neighPhan[' SSIM']), np.mean(neigh2neighPhan[' MSE'])]
+    neigh2neighPhanStd=[np.std(neigh2neighPhan[' PSNR']),np.std(neigh2neighPhan[' SSIM']), np.std(neigh2neighPhan[' MSE'])]
     line2LinePhanAvg =  [np.mean(line2linePhan[' PSNR']), np.mean(line2linePhan[' SSIM']), np.mean(line2linePhan[' MSE'])]
     line2LinePhanStd =  [np.std(line2linePhan[' PSNR']), np.std(line2linePhan[' SSIM']), np.std(line2linePhan[' MSE'])]
    
@@ -255,6 +261,7 @@ if __name__ == '__main__':
     noise2NyquistFCMResults = []
     noise2VoidFCMResults = []
     line2LineFCMResults = []
+    neigh2neighFCMResults=[]
     for f in folds:
         truncClean=pd.read_csv(os.path.join(supervisedDirFCM,'%02d'%f,'testResults_last.csv'))
         supervisedFCMResults.append(getResultsFCM(truncClean))
@@ -265,6 +272,8 @@ if __name__ == '__main__':
         noise2VoidFCMResults.append(getResultsFCM(truncN2V))
         truncL2L=pd.read_csv(os.path.join(line2lineDirFCM,'%02d'%f,'testResults_last.csv'))
         line2LineFCMResults.append(getResultsFCM(truncL2L))
+        truncNeigh2Neigh=pd.read_csv(os.path.join(neigh2neighDirFCM,'%02d'%f,'testResults_last.csv'))
+        neigh2neighFCMResults.append(getResultsFCM(truncNeigh2Neigh))
         
     supervisedFCMAvg, supervisedFCMStd = getSummaryStats(supervisedFCMResults)
     noise2NyquistFCMAvg, noise2NyquistFCMStd = getSummaryStats(noise2NyquistFCMResults)
@@ -327,16 +336,21 @@ if __name__ == '__main__':
         frameListML[i,:] = range(frameListML.shape[1])
     n2nyqDF = pd.DataFrame({'Method':[],'Volume':[],'Frame':[],'NIQI':[]})
     n2voidDF = pd.DataFrame({'Method':[],'Volume':[],'Frame':[],'NIQI':[]})
+    neigh2neighDF=pd.DataFrame({'Method':[],'Volume':[],'Frame':[],'NIQI':[]})
     
     n2nyqDF['NIQI'] = MLDat[0,:,:].flatten()
     n2voidDF['NIQI'] = MLDat[1,:,:].flatten()
+    neigh2neighDF['NIQI']=MLDat[3,:,:].flatten()
     n2nyqDF['Method']='noise2Nyquist'
     n2voidDF['Method'] = 'noise2void'
+    neigh2neighDF['Method']='neighbor2neighbor'
     n2nyqDF['Volume'] = volumeListML.flatten()
     n2voidDF['Volume'] = volumeListML.flatten()
+    neigh2neighDF['Volume']=volumeListML.flatten()
     n2nyqDF['Frame'] = frameListML.flatten()
     n2voidDF['Frame'] = frameListML.flatten()
-    MLdf = pd.concat((n2nyqDF,n2voidDF))
+    neigh2neighDF['Frame']=frameListML.flatten()
+    MLdf = pd.concat((n2nyqDF,n2voidDF,neigh2neighDF))
     
     volDF=MLdf.groupby(['Volume','Method']).mean()
     volDF.reset_index(inplace=True)
@@ -375,18 +389,19 @@ if __name__ == '__main__':
     #Collect phantom data into nice dataframe to copy to table
     ################################################
     phantomStatsDF = pd.DataFrame({'Method':[],'avgPSNR':[],'stdPSNR':[],'avgSSIM':[],'stdSSIM':[],'avgMSE':[],'stdMSE':[]})
-    phantomStatsDF['Method']=['Noisy','Supervised','noise2Nyquist','noise2noise','noise2void',
+    phantomStatsDF['Method']=['Noisy','Supervised','noise2Nyquist','noise2noise','noise2void','neighbor2neighbor',
                               'Median','Gaussian','Stack Avg.','BM3D','BM4D']
     phantomStatsDF.iloc[0,1::] =  [val for pair in zip(noisyPhanAvg,noisyPhanStd) for val in pair]
     phantomStatsDF.iloc[1,1::] =  [val for pair in zip(supervisedPhanAvg,supervisedPhanStd) for val in pair]
     phantomStatsDF.iloc[2,1::] =  [val for pair in zip(noise2NyquistPhanAvg,noise2NyquistPhanStd) for val in pair]
     phantomStatsDF.iloc[3,1::] =  [val for pair in zip(noise2NoisePhanAvg,noise2NoisePhanStd) for val in pair]
     phantomStatsDF.iloc[4,1::] =  [val for pair in zip(noise2VoidPhanAvg,noise2VoidPhanStd) for val in pair]
-    phantomStatsDF.iloc[5,1::] =  [val for pair in zip(medianPhanAvg,medianPhanStd) for val in pair]
-    phantomStatsDF.iloc[6,1::] =  [val for pair in zip(gaussianPhanAvg,gaussianPhanStd) for val in pair]
-    phantomStatsDF.iloc[7,1::] =  [val for pair in zip(oofPhanAvg,oofPhanStd) for val in pair]
-    phantomStatsDF.iloc[8,1::] =  [val for pair in zip(bm3dPhanAvg,bm3dPhanStd) for val in pair]
-    phantomStatsDF.iloc[9,1::] =  [val for pair in zip(bm4dPhanAvg,bm4dPhanStd) for val in pair]
+    phantomStatsDF.iloc[5,1::] =  [val for pair in zip(neigh2neighPhanAvg,neigh2neighPhanStd) for val in pair]
+    phantomStatsDF.iloc[6,1::] =  [val for pair in zip(medianPhanAvg,medianPhanStd) for val in pair]
+    phantomStatsDF.iloc[7,1::] =  [val for pair in zip(gaussianPhanAvg,gaussianPhanStd) for val in pair]
+    phantomStatsDF.iloc[8,1::] =  [val for pair in zip(oofPhanAvg,oofPhanStd) for val in pair]
+    phantomStatsDF.iloc[9,1::] =  [val for pair in zip(bm3dPhanAvg,bm3dPhanStd) for val in pair]
+    phantomStatsDF.iloc[10,1::] =  [val for pair in zip(bm4dPhanAvg,bm4dPhanStd) for val in pair]
     
     ########################################
     #Collect FCM data into nice dataframe to copy to table
@@ -425,12 +440,12 @@ if __name__ == '__main__':
     #Collect OCT Data into nice dataframe
     ########################################
     OCTStatsDF=pd.DataFrame({'Method':[],'avgNIQI':[],'stdNIQI':[]})
-    OCTStatsDF['Method'] = ['noise2Nyquist','noise2void','Median','Gaussian','Stack Avg.','BM3D','BM4D']
-    OCTStatsDF['avgNIQI'] = [MLOCTAvg['NIQI'][0].item(),MLOCTAvg['NIQI'][1].item(),
+    OCTStatsDF['Method'] = ['neighbor2neighbor','noise2Nyquist','noise2void','Median','Gaussian','Stack Avg.','BM3D','BM4D']
+    OCTStatsDF['avgNIQI'] = [MLOCTAvg['NIQI'][0].item(),MLOCTAvg['NIQI'][1].item(),MLOCTAvg['NIQI'][2].item(),
                              convOCTAvg['NIQI']['median'].item(),convOCTAvg['NIQI']['gaussian'].item(),
                              convOCTAvg['NIQI']['oofAvg'].item(),convOCTAvg['NIQI']['bm3d'].item(),
                              convOCTAvg['NIQI']['bm4d'].item()]
-    OCTStatsDF['stdNIQI'] = [MLOCTStd['NIQI'][0].item(),MLOCTStd['NIQI'][1].item(),
+    OCTStatsDF['stdNIQI'] = [MLOCTStd['NIQI'][0].item(),MLOCTStd['NIQI'][1].item(),MLOCTStd['NIQI'][2].item(),
                              convOCTStd['NIQI']['median'].item(),convOCTStd['NIQI']['gaussian'].item(),
                              convOCTStd['NIQI']['oofAvg'].item(),convOCTStd['NIQI']['bm3d'].item(),
                              convOCTStd['NIQI']['bm4d'].item()]

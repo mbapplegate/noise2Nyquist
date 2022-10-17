@@ -1,4 +1,3 @@
-addpath(genpath('utils'))
 %%
 %Calculate the NIQI for OCT conventionally processed
 baseDir = '../results/oct/conventional/';
@@ -7,6 +6,8 @@ scans = 0:35;
 numIms = 96;
 %%
 %Start with the noisy images which will be a baseline
+%Note only the central N frames are saved in this folder, so
+%we can just go through all of them
 NIQINoisy = zeros(length(scans),numIms);
 fprintf('Working on the noisy Images...\n')
 for scanNum = scans
@@ -60,8 +61,8 @@ disp([methodAvg,methodStd])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Repeat analysis for ML methods
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-learningMethods = {'noise2Nyq','noise2void','line2line'};
-dataRuns = {'2022-07-15--13-45-14','2022-07-13--17-39-29','2022-07-19--03-17-51'};
+learningMethods = {'noise2Nyq','noise2void','line2line','neighbor2neighbor'};
+dataRuns = {'2022-07-15--13-45-14','2022-07-13--17-39-29','2022-07-19--03-17-51','neigh2neigh/2022-10-14-14-35'};
 %Pre-allocate for the new NIQI data
 MLNIQI = zeros(length(learningMethods),length(scans),numIms);
 %I will divide by this value to get relative NIQI
@@ -89,8 +90,8 @@ for fold = 0:9
 end
 %%
 %Then get the NIQI for the original frames
-%originalDataDir = '/home/matthew/Documents/datasets/OCT_Denoise/Data';
-originalDataDir = 'D:\datasets\OCT Denoise\Data';
+originalDataDir = '/home/matthew/Documents/datasets/OCT_Denoise/Data';
+%originalDataDir = 'D:\datasets\OCT Denoise\Data';
 fprintf("Working on raw frames...\n");
 for i = 1:length(scans)
     if scans(i) == 10
