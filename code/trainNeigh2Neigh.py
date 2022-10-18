@@ -40,6 +40,7 @@ parser.add_argument("--Lambda1", type=float, default=1.0)
 parser.add_argument("--Lambda2", type=float, default=1.0)
 parser.add_argument("--increase_ratio", type=float, default=2.0)
 parser.add_argument("--fold_number",type=int,default=0)
+parser.add_argument("--numReps",type=int,default=1)
 parser.add_argument("--dataType",help="Type of data to process: 'phantom','confocal','oct','ct','rcm'",default='oct')
 
 opt, _ = parser.parse_known_args()
@@ -48,8 +49,8 @@ operation_seed_counter = 0
 os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpu_devices
 
 
-def checkpoint(net, epoch, name):
-    save_model_path = os.path.join(opt.save_model_path, opt.log_name, systime)
+def checkpoint(net, epoch, name,rep=0):
+    save_model_path = os.path.join(opt.save_model_path, opt.log_name,'%02d'%rep, systime)
     os.makedirs(save_model_path, exist_ok=True)
     model_name = 'epoch_{}_{:03d}.pth'.format(name, epoch)
     save_model_path = os.path.join(save_model_path, model_name)
@@ -346,306 +347,307 @@ def calculate_psnr(target, ref):
     return psnr
 
 if __name__ == '__main__':
-    
-    if opt.dataType == 'phantom':
-        # Training Set
-        transformer = transforms.Compose([utils.ToTensor()])
-        TrainingDataset = utils.SheppLoganDataset('./HRPhantomData/SheppLoganPhan.mat',
-                                                  nyquistSampling=4,
-                                                  sampMult=1,
-                                                  noiseStd=45,
-                                                  nextImage=False,
-                                                  singleImTrain=True,
-                                                  transform=transformer,
-                                                  noiseType='additive')
-        TrainingLoader = DataLoader(dataset=TrainingDataset,
-                                    num_workers=8,
-                                    batch_size=opt.batchsize,
-                                    shuffle=True,
-                                    pin_memory=False,
-                                    drop_last=True)
-        valDataset = utils.SheppLoganDataset('./HRPhantomData/YuYeWangPhan.mat',
-                                             nyquistSampling=4,
-                                             sampMult=1,
-                                             noiseStd=45,
-                                             nextImage=False,
-                                             singleImTrain=True,
-                                             transform=transformer,
-                                             noiseType='additive')
-        valLoader = DataLoader(dataset=valDataset,
-                               num_workers=8,
-                               batch_size=opt.batchsize,
-                               shuffle=False,
-                               pin_memory=False,
-                               drop_last=True)
-    else:
-        
-        if opt.dataType=='oct':
+    for z in range(opt.numReps):
+        print("Working on rep %d of %d"%((z+1),opt.numReps))
+        if opt.dataType == 'phantom':
+            # Training Set
+            transformer = transforms.Compose([utils.ToTensor()])
+            TrainingDataset = utils.SheppLoganDataset('./HRPhantomData/SheppLoganPhan.mat',
+                                                      nyquistSampling=4,
+                                                      sampMult=1,
+                                                      noiseStd=45,
+                                                      nextImage=False,
+                                                      singleImTrain=True,
+                                                      transform=transformer,
+                                                      noiseType='additive')
+            TrainingLoader = DataLoader(dataset=TrainingDataset,
+                                        num_workers=8,
+                                        batch_size=opt.batchsize,
+                                        shuffle=True,
+                                        pin_memory=False,
+                                        drop_last=True)
+            valDataset = utils.SheppLoganDataset('./HRPhantomData/YuYeWangPhan.mat',
+                                                 nyquistSampling=4,
+                                                 sampMult=1,
+                                                 noiseStd=45,
+                                                 nextImage=False,
+                                                 singleImTrain=True,
+                                                 transform=transformer,
+                                                 noiseType='additive')
+            valLoader = DataLoader(dataset=valDataset,
+                                   num_workers=8,
+                                   batch_size=opt.batchsize,
+                                   shuffle=False,
+                                   pin_memory=False,
+                                   drop_last=True)
+        else:
             
-            testNums = [[11,31,28,8], [6,15,25,2],
-                            [5,27,24,14], [9,26,16,7],
-                            [19,34,29,23],[18,35,13,30],
-                            [17,22],[1,12,3],[32,20,33],
-                            [0,21,4]]
-            trainNums = []
-            for i in range(len(testNums)):
-                allNums = np.arange(36,dtype='int32')
-                temp=testNums[i].copy()
-                temp.append(10)
-                foldNums=np.delete(allNums,np.array(temp,dtype='int32'))
-                trainNums.append(foldNums)
-            
-            trainPath = []
-            testPath = []
-            for i in range(len(trainNums[opt.fold_number])):
-                trainPath.append(os.path.join(opt.data_dir,'%02d'%trainNums[opt.fold_number][i]))
-            for j in range(len(testNums[opt.fold_number])):
-                testPath.append(os.path.join(opt.data_dir,'%02d'%testNums[opt.fold_number][j]))
+            if opt.dataType=='oct':
                 
+                testNums = [[11,31,28,8], [6,15,25,2],
+                                [5,27,24,14], [9,26,16,7],
+                                [19,34,29,23],[18,35,13,30],
+                                [17,22],[1,12,3],[32,20,33],
+                                [0,21,4]]
+                trainNums = []
+                for i in range(len(testNums)):
+                    allNums = np.arange(36,dtype='int32')
+                    temp=testNums[i].copy()
+                    temp.append(10)
+                    foldNums=np.delete(allNums,np.array(temp,dtype='int32'))
+                    trainNums.append(foldNums)
                 
-            thisFoldTrainNoisy = trainPath
-            thisFoldTestNoisy = testPath
-            thisFoldTrainClean = None
-            thisFoldTestClean = None
-        
-        elif opt.dataType == 'confocal':
-            testNums = [[2,5] ,[8,11],[14,1],[9,4],
-                        [7,13],[0,3],[6],[12],[15],[10]]
-            trainNums = []
-            for i in range(len(testNums)):
-                allNums = np.arange(16,dtype='int32')
-                foldNums=np.delete(allNums,np.array(np.array(testNums[i]).astype('int32')))
-                trainNums.append(foldNums)
-    
-            testPathNoisy=[]
-            trainPathNoisy=[]
-            testPathClean=[]
-            trainPathClean=[]
-            for i in range(len(trainNums[opt.fold_number])):
-                trainPathNoisy.append(os.path.join(opt.data_dir,'%02d'%trainNums[opt.fold_number][i]))
-                trainPathClean.append(os.path.join(opt.val_dirs,'%02d'%trainNums[opt.fold_number][i]))
-            for i in range(len(testNums[opt.fold_number])):
-                testPathNoisy.append(os.path.join(opt.data_dir,'%02d'%testNums[opt.fold_number][i]))
-                testPathClean.append(os.path.join(opt.val_dirs,'%02d'%testNums[opt.fold_number][i]))
-            thisFoldTrainNoisy=trainPathNoisy
-            thisFoldTestNoisy=testPathNoisy
-            thisFoldTrainClean=trainPathClean
-            thisFoldTestClean=testPathClean
-            
-        elif opt.dataType=='ct':
-            subfoldersNoisy = [f.path for f in os.scandir(os.path.join(opt.data_dir,'current')) if f.is_dir()]
-            subfoldersClean = [f.path for f in os.scandir(os.path.join(opt.data_dir,'clean')) if f.is_dir()]
-            folds = KFold(n_splits=10)
-            trainPatientsNoisy=[]
-            testPatientsNoisy=[]
-            trainPatientsClean=[]
-            testPatientsClean=[]
-            for trainIdx,testIdx in folds.split(subfoldersNoisy):
-                trainPatientsNoisy.append([subfoldersNoisy[i] for i in trainIdx])
-                testPatientsNoisy.append([subfoldersNoisy[i] for i in testIdx])
-                trainPatientsClean.append([subfoldersClean[i] for i in trainIdx])
-                testPatientsClean.append([subfoldersClean[i] for i in testIdx])
-            
-            thisFoldTrainNoisy = trainPatientsNoisy[opt.fold_number]
-            thisFoldTestNoisy = testPatientsNoisy[opt.fold_number]
-            thisFoldTrainClean = trainPatientsClean[opt.fold_number]
-            thisFoldTestClean = testPatientsClean[opt.fold_number]
-        
-        # Training Set
-        TrainingDataset = DataLoader_Imagenet_val(thisFoldTrainNoisy,thisFoldTrainClean, patch=opt.patchsize)
-        TrainingLoader = DataLoader(dataset=TrainingDataset,
-                                    num_workers=8,
-                                    batch_size=opt.batchsize,
-                                    shuffle=True,
-                                    pin_memory=False,
-                                    drop_last=True)
-        valDataset = DataLoader_Imagenet_val(thisFoldTestNoisy,thisFoldTestClean,patch=opt.patchsize)
-        indicies = range(len(valDataset))
-        subsetIdxs = np.random.choice(indicies,size=1024)
-        valSubset = torch.utils.data.Subset(valDataset,subsetIdxs)
-        valLoader = DataLoader(dataset=valSubset,
-                               num_workers=8,
-                               batch_size=opt.batchsize,
-                               shuffle=False,
-                               pin_memory=False,
-                               drop_last=True)
-    
-    # Noise adder
-    noise_adder = AugmentNoise(style=opt.noisetype)
-    
-    # Network
-    network = UNet(in_nc=opt.n_channel,
-                   out_nc=opt.n_channel,
-                   n_feature=opt.n_feature)
-    if opt.parallel:
-        network = torch.nn.DataParallel(network)
-    network = network.cuda()
-    
-    # about training scheme
-    num_epoch = opt.n_epoch
-    ratio = num_epoch / 100
-    optimizer = optim.Adam(network.parameters(), lr=opt.lr)
-    scheduler = lr_scheduler.MultiStepLR(optimizer,
-                                         milestones=[
-                                             int(20 * ratio) - 1,
-                                             int(40 * ratio) - 1,
-                                             int(60 * ratio) - 1,
-                                             int(80 * ratio) - 1
-                                         ],
-                                         gamma=opt.gamma)
-    print("Batchsize={}, number of epoch={}".format(opt.batchsize, opt.n_epoch))
-    
-    checkpoint(network, 0, "model")
-    print('init finish')
-    
-    for epoch in range(1, opt.n_epoch + 1):
-        cnt = 0
-    
-        for param_group in optimizer.param_groups:
-            current_lr = param_group['lr']
-        print("LearningRate of Epoch {} = {}".format(epoch, current_lr))
-    
-        network.train()
-        for iteration, ims in enumerate(TrainingLoader):
-            st = time.time()
-            if len(ims) >= 2:
-                if opt.dataType != 'phantom':
-                    clean=ims[1]
-                    noisy=ims[0]
-                else:
-                    clean=ims[0]
-                    noisy=ims[1]
-            else:
-                noisy=ims[0]
-                clean=ims[0]
-            clean = clean.cuda()
-            noisy=noisy.cuda()
-            optimizer.zero_grad()
-    
-            mask1, mask2 = generate_mask_pair(noisy)
-            noisy_sub1 = generate_subimages(noisy, mask1)
-            noisy_sub2 = generate_subimages(noisy, mask2)
-            with torch.no_grad():
-                noisy_denoised = network(noisy)
-            noisy_sub1_denoised = generate_subimages(noisy_denoised, mask1)
-            noisy_sub2_denoised = generate_subimages(noisy_denoised, mask2)
-    
-            noisy_output = network(noisy_sub1)
-            noisy_target = noisy_sub2
-            Lambda = epoch / opt.n_epoch * opt.increase_ratio
-            diff = noisy_output - noisy_target
-            exp_diff = noisy_sub1_denoised - noisy_sub2_denoised
-    
-            loss1 = torch.mean(diff**2)
-            loss2 = Lambda * torch.mean((diff - exp_diff)**2)
-            loss_all = opt.Lambda1 * loss1 + opt.Lambda2 * loss2
-    
-            loss_all.backward()
-            optimizer.step()
-            print(
-                '{:04d} {:05d} Loss1={:.6f}, Lambda={}, Loss2={:.6f}, Loss_Full={:.6f}, Time={:.4f}'
-                .format(epoch, iteration, np.mean(loss1.item()), Lambda,
-                        np.mean(loss2.item()), np.mean(loss_all.item()),
-                        time.time() - st))
-    
-        scheduler.step()
-    
-        if epoch % opt.n_snapshot == 0 or epoch == opt.n_epoch:
-            network.eval()
-            # save checkpoint
-            checkpoint(network, epoch, "model")
-            # validation
-            save_model_path = os.path.join(opt.save_model_path, opt.log_name,
-                                           systime)
-            validation_path = os.path.join(save_model_path, "validation")
-            os.makedirs(validation_path, exist_ok=True)
-            np.random.seed(101)
-            valid_repeat_times = {"Kodak": 1, "BSD300": 3, "Set14": 20}
-    
-        
-            psnr_result = []
-            ssim_result = []
-            
-            for idx, valIms in enumerate(valLoader):
-                for i in range(valIms[0].shape[0]):
-                    if len(valIms) >= 2:
-                        if opt.dataType != 'phantom':
-                            origin255 = valIms[1][i,0,:,:] * 255
-                            origin255 = np.expand_dims(origin255,2)
-                            noisy_im = np.array(valIms[0][i,0,:,:], dtype=np.float32)
-                            noisy_im = np.expand_dims(noisy_im,2)
-                        else:
-                            origin255 = valIms[0][i,0,:,:] * 255
-                            origin255 = np.expand_dims(origin255,2)
-                            noisy_im = np.array(valIms[1][i,0,:,:], dtype=np.float32)
-                            noisy_im = np.expand_dims(noisy_im,2)
-                    else:
-                        origin255 = valIms[0][i,0,:,:]* 255
-                        origin255 = np.expand_dims(origin255,2)
-                        noisy_im = np.array(valIms[0][0,0,:,:],dtype=np.float32)
-                        noisy_im = np.expand_dims(noisy_im,2)
-                    if epoch == opt.n_snapshot:
-                        noisy255 = noisy_im.copy()
-                        noisy255 = np.clip(noisy255 * 255.0 + 0.5, 0,
-                                           255).astype(np.uint8)
+                trainPath = []
+                testPath = []
+                for i in range(len(trainNums[opt.fold_number])):
+                    trainPath.append(os.path.join(opt.data_dir,'%02d'%trainNums[opt.fold_number][i]))
+                for j in range(len(testNums[opt.fold_number])):
+                    testPath.append(os.path.join(opt.data_dir,'%02d'%testNums[opt.fold_number][j]))
                     
-                    # padding to square
-                    H = noisy_im.shape[0]
-                    W = noisy_im.shape[1]
-                    val_size = (max(H, W) + 31) // 32 * 32
-                    noisy_im = np.pad(
-                        noisy_im,
-                        [[0, val_size - H], [0, val_size - W], [0, 0]],
-                        'reflect')
-                    transformer = transforms.Compose([transforms.ToTensor()])
-                    noisy_im = transformer(noisy_im)
-                    noisy_im = torch.unsqueeze(noisy_im, 0)
-                    noisy_im = noisy_im.cuda()
-                    with torch.no_grad():
-                        prediction = network(noisy_im)
-                        prediction = prediction[:, :, :H, :W]
-                    prediction = prediction.permute(0, 2, 3, 1)
-                    prediction = prediction.cpu().data.clamp(0, 1).numpy()
-                    prediction = prediction.squeeze()
-                    pred255 = np.clip(prediction * 255.0 + 0.5, 0,
-                                      255).astype(np.uint8)
-                    #if len(pred255.shape) == 2:
-                    #    pred255 = np.expand_dims(pred255,2)
-                    # calculate psnr
-                    cur_psnr = calculate_psnr(np.squeeze(origin255.astype(np.float32)),
-                                              pred255.astype(np.float32))
-                    psnr_result.append(cur_psnr)
-                    cur_ssim = calculate_ssim(np.squeeze(origin255.astype(np.float32)),
-                                              pred255.astype(np.float32))
-                    ssim_result.append(cur_ssim)
+                    
+                thisFoldTrainNoisy = trainPath
+                thisFoldTestNoisy = testPath
+                thisFoldTrainClean = None
+                thisFoldTestClean = None
+            
+            elif opt.dataType == 'confocal':
+                testNums = [[2,5] ,[8,11],[14,1],[9,4],
+                            [7,13],[0,3],[6],[12],[15],[10]]
+                trainNums = []
+                for i in range(len(testNums)):
+                    allNums = np.arange(16,dtype='int32')
+                    foldNums=np.delete(allNums,np.array(np.array(testNums[i]).astype('int32')))
+                    trainNums.append(foldNums)
+        
+                testPathNoisy=[]
+                trainPathNoisy=[]
+                testPathClean=[]
+                trainPathClean=[]
+                for i in range(len(trainNums[opt.fold_number])):
+                    trainPathNoisy.append(os.path.join(opt.data_dir,'%02d'%trainNums[opt.fold_number][i]))
+                    trainPathClean.append(os.path.join(opt.val_dirs,'%02d'%trainNums[opt.fold_number][i]))
+                for i in range(len(testNums[opt.fold_number])):
+                    testPathNoisy.append(os.path.join(opt.data_dir,'%02d'%testNums[opt.fold_number][i]))
+                    testPathClean.append(os.path.join(opt.val_dirs,'%02d'%testNums[opt.fold_number][i]))
+                thisFoldTrainNoisy=trainPathNoisy
+                thisFoldTestNoisy=testPathNoisy
+                thisFoldTrainClean=trainPathClean
+                thisFoldTestClean=testPathClean
+                
+            elif opt.dataType=='ct':
+                subfoldersNoisy = [f.path for f in os.scandir(os.path.join(opt.data_dir,'current')) if f.is_dir()]
+                subfoldersClean = [f.path for f in os.scandir(os.path.join(opt.data_dir,'clean')) if f.is_dir()]
+                folds = KFold(n_splits=10)
+                trainPatientsNoisy=[]
+                testPatientsNoisy=[]
+                trainPatientsClean=[]
+                testPatientsClean=[]
+                for trainIdx,testIdx in folds.split(subfoldersNoisy):
+                    trainPatientsNoisy.append([subfoldersNoisy[i] for i in trainIdx])
+                    testPatientsNoisy.append([subfoldersNoisy[i] for i in testIdx])
+                    trainPatientsClean.append([subfoldersClean[i] for i in trainIdx])
+                    testPatientsClean.append([subfoldersClean[i] for i in testIdx])
+                
+                thisFoldTrainNoisy = trainPatientsNoisy[opt.fold_number]
+                thisFoldTestNoisy = testPatientsNoisy[opt.fold_number]
+                thisFoldTrainClean = trainPatientsClean[opt.fold_number]
+                thisFoldTestClean = testPatientsClean[opt.fold_number]
+            
+            # Training Set
+            TrainingDataset = DataLoader_Imagenet_val(thisFoldTrainNoisy,thisFoldTrainClean, patch=opt.patchsize)
+            TrainingLoader = DataLoader(dataset=TrainingDataset,
+                                        num_workers=8,
+                                        batch_size=opt.batchsize,
+                                        shuffle=True,
+                                        pin_memory=False,
+                                        drop_last=True)
+            valDataset = DataLoader_Imagenet_val(thisFoldTestNoisy,thisFoldTestClean,patch=opt.patchsize)
+            indicies = range(len(valDataset))
+            subsetIdxs = np.random.choice(indicies,size=1024)
+            valSubset = torch.utils.data.Subset(valDataset,subsetIdxs)
+            valLoader = DataLoader(dataset=valSubset,
+                                   num_workers=8,
+                                   batch_size=opt.batchsize,
+                                   shuffle=False,
+                                   pin_memory=False,
+                                   drop_last=True)
+        
+        # Noise adder
+        noise_adder = AugmentNoise(style=opt.noisetype)
+        
+        # Network
+        network = UNet(in_nc=opt.n_channel,
+                       out_nc=opt.n_channel,
+                       n_feature=opt.n_feature)
+        if opt.parallel:
+            network = torch.nn.DataParallel(network)
+        network = network.cuda()
+        
+        # about training scheme
+        num_epoch = opt.n_epoch
+        ratio = num_epoch / 100
+        optimizer = optim.Adam(network.parameters(), lr=opt.lr)
+        scheduler = lr_scheduler.MultiStepLR(optimizer,
+                                             milestones=[
+                                                 int(20 * ratio) - 1,
+                                                 int(40 * ratio) - 1,
+                                                 int(60 * ratio) - 1,
+                                                 int(80 * ratio) - 1
+                                             ],
+                                             gamma=opt.gamma)
+        print("Batchsize={}, number of epoch={}".format(opt.batchsize, opt.n_epoch))
+        
+        checkpoint(network, 0, "model",rep=z)
+        print('init finish')
+        
+        for epoch in range(1, opt.n_epoch + 1):
+            cnt = 0
+        
+            for param_group in optimizer.param_groups:
+                current_lr = param_group['lr']
+            print("LearningRate of Epoch {} = {}".format(epoch, current_lr))
+        
+            network.train()
+            for iteration, ims in enumerate(TrainingLoader):
+                st = time.time()
+                if len(ims) >= 2:
+                    if opt.dataType != 'phantom':
+                        clean=ims[1]
+                        noisy=ims[0]
+                    else:
+                        clean=ims[0]
+                        noisy=ims[1]
+                else:
+                    noisy=ims[0]
+                    clean=ims[0]
+                clean = clean.cuda()
+                noisy=noisy.cuda()
+                optimizer.zero_grad()
+        
+                mask1, mask2 = generate_mask_pair(noisy)
+                noisy_sub1 = generate_subimages(noisy, mask1)
+                noisy_sub2 = generate_subimages(noisy, mask2)
+                with torch.no_grad():
+                    noisy_denoised = network(noisy)
+                noisy_sub1_denoised = generate_subimages(noisy_denoised, mask1)
+                noisy_sub2_denoised = generate_subimages(noisy_denoised, mask2)
+        
+                noisy_output = network(noisy_sub1)
+                noisy_target = noisy_sub2
+                Lambda = epoch / opt.n_epoch * opt.increase_ratio
+                diff = noisy_output - noisy_target
+                exp_diff = noisy_sub1_denoised - noisy_sub2_denoised
+        
+                loss1 = torch.mean(diff**2)
+                loss2 = Lambda * torch.mean((diff - exp_diff)**2)
+                loss_all = opt.Lambda1 * loss1 + opt.Lambda2 * loss2
+        
+                loss_all.backward()
+                optimizer.step()
+                print(
+                    '{:04d} {:05d} Loss1={:.6f}, Lambda={}, Loss2={:.6f}, Loss_Full={:.6f}, Time={:.4f}'
+                    .format(epoch, iteration, np.mean(loss1.item()), Lambda,
+                            np.mean(loss2.item()), np.mean(loss_all.item()),
+                            time.time() - st))
+        
+            scheduler.step()
+        
+            if epoch % opt.n_snapshot == 0 or epoch == opt.n_epoch:
+                network.eval()
+                # save checkpoint
+                checkpoint(network, epoch, "model",rep=z)
+                # validation
+                save_model_path = os.path.join(opt.save_model_path, opt.log_name,
+                                               systime,'%02d'%z)
+                validation_path = os.path.join(save_model_path, "validation")
+                os.makedirs(validation_path, exist_ok=True)
+                np.random.seed(101)
+                valid_repeat_times = {"Kodak": 1, "BSD300": 3, "Set14": 20}
+        
+            
+                psnr_result = []
+                ssim_result = []
+                
+                for idx, valIms in enumerate(valLoader):
+                    for i in range(valIms[0].shape[0]):
+                        if len(valIms) >= 2:
+                            if opt.dataType != 'phantom':
+                                origin255 = valIms[1][i,0,:,:] * 255
+                                origin255 = np.expand_dims(origin255,2)
+                                noisy_im = np.array(valIms[0][i,0,:,:], dtype=np.float32)
+                                noisy_im = np.expand_dims(noisy_im,2)
+                            else:
+                                origin255 = valIms[0][i,0,:,:] * 255
+                                origin255 = np.expand_dims(origin255,2)
+                                noisy_im = np.array(valIms[1][i,0,:,:], dtype=np.float32)
+                                noisy_im = np.expand_dims(noisy_im,2)
+                        else:
+                            origin255 = valIms[0][i,0,:,:]* 255
+                            origin255 = np.expand_dims(origin255,2)
+                            noisy_im = np.array(valIms[0][0,0,:,:],dtype=np.float32)
+                            noisy_im = np.expand_dims(noisy_im,2)
+                        if epoch == opt.n_snapshot:
+                            noisy255 = noisy_im.copy()
+                            noisy255 = np.clip(noisy255 * 255.0 + 0.5, 0,
+                                               255).astype(np.uint8)
+                        
+                        # padding to square
+                        H = noisy_im.shape[0]
+                        W = noisy_im.shape[1]
+                        val_size = (max(H, W) + 31) // 32 * 32
+                        noisy_im = np.pad(
+                            noisy_im,
+                            [[0, val_size - H], [0, val_size - W], [0, 0]],
+                            'reflect')
+                        transformer = transforms.Compose([transforms.ToTensor()])
+                        noisy_im = transformer(noisy_im)
+                        noisy_im = torch.unsqueeze(noisy_im, 0)
+                        noisy_im = noisy_im.cuda()
+                        with torch.no_grad():
+                            prediction = network(noisy_im)
+                            prediction = prediction[:, :, :H, :W]
+                        prediction = prediction.permute(0, 2, 3, 1)
+                        prediction = prediction.cpu().data.clamp(0, 1).numpy()
+                        prediction = prediction.squeeze()
+                        pred255 = np.clip(prediction * 255.0 + 0.5, 0,
+                                          255).astype(np.uint8)
+                        #if len(pred255.shape) == 2:
+                        #    pred255 = np.expand_dims(pred255,2)
+                        # calculate psnr
+                        cur_psnr = calculate_psnr(np.squeeze(origin255.astype(np.float32)),
+                                                  pred255.astype(np.float32))
+                        psnr_result.append(cur_psnr)
+                        cur_ssim = calculate_ssim(np.squeeze(origin255.astype(np.float32)),
+                                                  pred255.astype(np.float32))
+                        ssim_result.append(cur_ssim)
+        
+                        # visualization
+                        if i==0 and epoch == opt.n_snapshot:
+                            save_path = os.path.join(
+                                validation_path,
+                                "{}_{:03d}-{:03d}_clean.png".format(
+                                    opt.dataType, idx, epoch))
+                            Image.fromarray(origin255[:,:,0].astype('uint8')).save(
+                                save_path)
+                            save_path = os.path.join(
+                                validation_path,
+                                "{}_{:03d}-{:03d}_noisy.png".format(
+                                    opt.dataType, idx, epoch))
+                            Image.fromarray(noisy255[:,:,0]).save(
+                                save_path)
+                        if i == 0:
+                            save_path = os.path.join(
+                                validation_path,
+                                "{}_{:03d}-{:03d}_denoised.png".format(
+                                    opt.dataType, idx, epoch))
+                            Image.fromarray(pred255).save(save_path)
     
-                    # visualization
-                    if i==0 and epoch == opt.n_snapshot:
-                        save_path = os.path.join(
-                            validation_path,
-                            "{}_{:03d}-{:03d}_clean.png".format(
-                                opt.dataType, idx, epoch))
-                        Image.fromarray(origin255[:,:,0].astype('uint8')).save(
-                            save_path)
-                        save_path = os.path.join(
-                            validation_path,
-                            "{}_{:03d}-{:03d}_noisy.png".format(
-                                opt.dataType, idx, epoch))
-                        Image.fromarray(noisy255[:,:,0]).save(
-                            save_path)
-                    if i == 0:
-                        save_path = os.path.join(
-                            validation_path,
-                            "{}_{:03d}-{:03d}_denoised.png".format(
-                                opt.dataType, idx, epoch))
-                        Image.fromarray(pred255).save(save_path)
-
-            psnr_result = np.array(psnr_result)
-            avg_psnr = np.mean(psnr_result)
-            avg_ssim = np.mean(ssim_result)
-            std_psnr = np.std(psnr_result)
-            std_ssim = np.std(ssim_result)
-            log_path = os.path.join(validation_path,
-                                    "A_log_{}.csv".format(opt.dataType))
-            with open(log_path, "a") as f:
-                f.writelines("{},{},{},{},{}\n".format(epoch, avg_psnr,std_psnr, avg_ssim,std_ssim))
+                psnr_result = np.array(psnr_result)
+                avg_psnr = np.mean(psnr_result)
+                avg_ssim = np.mean(ssim_result)
+                std_psnr = np.std(psnr_result)
+                std_ssim = np.std(ssim_result)
+                log_path = os.path.join(validation_path,
+                                        "A_log_{}.csv".format(opt.dataType))
+                with open(log_path, "a") as f:
+                    f.writelines("{},{},{},{},{}\n".format(epoch, avg_psnr,std_psnr, avg_ssim,std_ssim))
