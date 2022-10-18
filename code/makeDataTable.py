@@ -171,18 +171,18 @@ if __name__ == '__main__':
     #####################
     #Phantom L1 Random order
     #######################
-    supervisedRunPhan = '2022-06-29--12-00-53'
-    noise2NyquistRunPhan = '2022-06-29--12-15-22'
-    noise2noiseRunPhan =  '2022-06-29--12-50-44'
-    noise2voidRunPhan = '2022-06-29--12-41-28'
-    line2lineRunPhan = '2022-06-29--12-32-07'
+    supervisedRunPhan = '2022-10-18--14-34-55'
+    noise2NyquistRunPhan = '2022-10-18--16-17-49'
+    noise2noiseRunPhan =  '2022-10-18--15-26-26'
+    noise2voidRunPhan = '2022-10-18--18-13-49'
+    #line2lineRunPhan = '2022-06-29--12-32-07'
     neigh2neighRunPhan='2022-10-17-12-04'
-    supervisedPhan = pd.read_csv(os.path.join('..','results','phantom',supervisedRunPhan,'00','testResults_last.csv'))
-    noise2NyquistPhan = pd.read_csv(os.path.join('..','results','phantom',noise2NyquistRunPhan,'00','testResults_last.csv'))
-    noise2noisePhan = pd.read_csv(os.path.join('..','results','phantom',noise2noiseRunPhan,'00','testResults_last.csv'))
-    noise2voidPhan = pd.read_csv(os.path.join('..','results','phantom',noise2voidRunPhan,'00','testResults_last.csv'))
+    #supervisedPhan = pd.read_csv(os.path.join('..','results','phantom',supervisedRunPhan,'00','testResults_last.csv'))
+    #noise2NyquistPhan = pd.read_csv(os.path.join('..','results','phantom',noise2NyquistRunPhan,'00','testResults_last.csv'))
+    #noise2noisePhan = pd.read_csv(os.path.join('..','results','phantom',noise2noiseRunPhan,'00','testResults_last.csv'))
+    #noise2voidPhan = pd.read_csv(os.path.join('..','results','phantom',noise2voidRunPhan,'00','testResults_last.csv'))
     neigh2neighPhan=pd.read_csv(os.path.join('..','results','phantom','neigh2neigh',neigh2neighRunPhan,'00','testResults_last.csv'))
-    line2linePhan = pd.read_csv(os.path.join('..','results','phantom',line2lineRunPhan,'00','testResults_last.csv'))
+    #line2linePhan = pd.read_csv(os.path.join('..','results','phantom',line2lineRunPhan,'00','testResults_last.csv'))
     convenDirPhan = os.path.join('..','results','phantom','conventional')
    
     
@@ -233,18 +233,40 @@ if __name__ == '__main__':
     #Boil everything down to mean +/- standard deviation
     #But I want the standard deviation with n=number of patients
     print("Collecting Phantom data...")
-    supervisedPhanAvg = [np.mean(supervisedPhan[' PSNR']), np.mean(supervisedPhan[' SSIM']), np.mean(supervisedPhan[' MSE'])]
-    supervisedPhanStd= [np.std(supervisedPhan[' PSNR']), np.std(supervisedPhan[' SSIM']), np.std(supervisedPhan[' MSE'])]
-    noise2NyquistPhanAvg =[np.mean(noise2NyquistPhan[' PSNR']), np.mean(noise2NyquistPhan[' SSIM']), np.mean(noise2NyquistPhan[' MSE'])]
-    noise2NyquistPhanStd =[np.std(noise2NyquistPhan[' PSNR']), np.std(noise2NyquistPhan[' SSIM']), np.std(noise2NyquistPhan[' MSE'])]
-    noise2VoidPhanAvg = [np.mean(noise2voidPhan[' PSNR']), np.mean(noise2voidPhan[' SSIM']), np.mean(noise2voidPhan[' MSE'])]
-    noise2VoidPhanStd = [np.std(noise2voidPhan[' PSNR']), np.std(noise2voidPhan[' SSIM']), np.std(noise2voidPhan[' MSE'])]
-    noise2NoisePhanAvg =  [np.mean(noise2noisePhan[' PSNR']), np.mean(noise2noisePhan[' SSIM']), np.mean(noise2noisePhan[' MSE'])]
-    noise2NoisePhanStd =  [np.std(noise2noisePhan[' PSNR']), np.std(noise2noisePhan[' SSIM']), np.std(noise2noisePhan[' MSE'])]
+    supervisedPhanResults = []
+    noise2noisePhanResults=[]
+    noise2nyquistPhanResults=[]
+    noise2voidPhanResults=[]
+    for f in folds:
+        truncSup = pd.read_csv(os.path.join('..','results','phantom','runs',supervisedRunPhan,'%02d'%f,'testResults_last.csv'))
+        supervisedPhanResults.append([np.mean(truncSup[' PSNR']),np.mean(truncSup[' SSIM']), np.mean(truncSup[' MSE'])])
+        truncN2N = pd.read_csv(os.path.join('..','results','phantom','runs',noise2noiseRunPhan,'%02d'%f,'testResults_last.csv'))
+        noise2noisePhanResults.append([np.mean(truncN2N[' PSNR']),np.mean(truncN2N[' SSIM']), np.mean(truncN2N[' MSE'])])
+        truncN2Nyq=pd.read_csv(os.path.join('..','results','phantom','runs',noise2NyquistRunPhan,'%02d'%f,'testResults_last.csv'))
+        noise2nyquistPhanResults.append([np.mean(truncN2Nyq[' PSNR']),np.mean(truncN2Nyq[' SSIM']), np.mean(truncN2Nyq[' MSE'])])
+        truncN2V=pd.read_csv(os.path.join('..','results','phantom','runs',noise2voidRunPhan,'%02d'%f,'testResults_last.csv'))
+        noise2voidPhanResults.append([np.mean(truncN2V[' PSNR']),np.mean(truncN2V[' SSIM']), np.mean(truncN2V[' MSE'])])
+    supervisedPhanAvg = np.mean(np.array(supervisedPhanResults),0)
+    supervisedPhanStd = np.std(np.array(supervisedPhanResults),0)
+    noise2NoisePhanAvg = np.mean(np.array(noise2noisePhanResults),0)
+    noise2NoisePhanStd = np.std(np.array(noise2noisePhanResults),0)
+    noise2NyquistPhanAvg=np.mean(np.array(noise2nyquistPhanResults),0)
+    noise2NyquistPhanStd=np.std(np.array(noise2nyquistPhanResults),0)
+    noise2VoidPhanAvg=np.mean(np.array(noise2voidPhanResults),0)
+    noise2VoidPhanStd=np.std(np.array(noise2voidPhanResults),0)
+    
+    #supervisedPhanAvg = [np.mean(supervisedPhan[' PSNR']), np.mean(supervisedPhan[' SSIM']), np.mean(supervisedPhan[' MSE'])]
+    #supervisedPhanStd= [np.std(supervisedPhan[' PSNR']), np.std(supervisedPhan[' SSIM']), np.std(supervisedPhan[' MSE'])]
+    #noise2NyquistPhanAvg =[np.mean(noise2NyquistPhan[' PSNR']), np.mean(noise2NyquistPhan[' SSIM']), np.mean(noise2NyquistPhan[' MSE'])]
+    #noise2NyquistPhanStd =[np.std(noise2NyquistPhan[' PSNR']), np.std(noise2NyquistPhan[' SSIM']), np.std(noise2NyquistPhan[' MSE'])]
+    #noise2VoidPhanAvg = [np.mean(noise2voidPhan[' PSNR']), np.mean(noise2voidPhan[' SSIM']), np.mean(noise2voidPhan[' MSE'])]
+    #noise2VoidPhanStd = [np.std(noise2voidPhan[' PSNR']), np.std(noise2voidPhan[' SSIM']), np.std(noise2voidPhan[' MSE'])]
+    #noise2NoisePhanAvg =  [np.mean(noise2noisePhan[' PSNR']), np.mean(noise2noisePhan[' SSIM']), np.mean(noise2noisePhan[' MSE'])]
+    #noise2NoisePhanStd =  [np.std(noise2noisePhan[' PSNR']), np.std(noise2noisePhan[' SSIM']), np.std(noise2noisePhan[' MSE'])]
     neigh2neighPhanAvg=[np.mean(neigh2neighPhan[' PSNR']),np.mean(neigh2neighPhan[' SSIM']), np.mean(neigh2neighPhan[' MSE'])]
     neigh2neighPhanStd=[np.std(neigh2neighPhan[' PSNR']),np.std(neigh2neighPhan[' SSIM']), np.std(neigh2neighPhan[' MSE'])]
-    line2LinePhanAvg =  [np.mean(line2linePhan[' PSNR']), np.mean(line2linePhan[' SSIM']), np.mean(line2linePhan[' MSE'])]
-    line2LinePhanStd =  [np.std(line2linePhan[' PSNR']), np.std(line2linePhan[' SSIM']), np.std(line2linePhan[' MSE'])]
+    #line2LinePhanAvg =  [np.mean(line2linePhan[' PSNR']), np.mean(line2linePhan[' SSIM']), np.mean(line2linePhan[' MSE'])]
+    #line2LinePhanStd =  [np.std(line2linePhan[' PSNR']), np.std(line2linePhan[' SSIM']), np.std(line2linePhan[' MSE'])]
    
     noisyPhanAvg, noisyPhanStd,noisyData = getPhantomStats(convenDirPhan,'none0')
     medianPhanAvg, medianPhanStd,medianData = getPhantomStats(convenDirPhan,'median3')
