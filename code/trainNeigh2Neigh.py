@@ -352,7 +352,7 @@ if __name__ == '__main__':
         if opt.dataType == 'phantom':
             # Training Set
             transformer = transforms.Compose([utils.ToTensor()])
-            TrainingDataset = utils.SheppLoganDataset('./HRPhantomData/SheppLoganPhan.mat',
+            TrainingDataset = utils.SheppLoganDataset('../HRPhantomData/SheppLoganPhan.mat',
                                                       nyquistSampling=4,
                                                       sampMult=1,
                                                       noiseStd=45,
@@ -366,7 +366,7 @@ if __name__ == '__main__':
                                         shuffle=True,
                                         pin_memory=False,
                                         drop_last=True)
-            valDataset = utils.SheppLoganDataset('./HRPhantomData/YuYeWangPhan.mat',
+            valDataset = utils.SheppLoganDataset('../HRPhantomData/YuYeWangPhan.mat',
                                                  nyquistSampling=4,
                                                  sampMult=1,
                                                  noiseStd=45,

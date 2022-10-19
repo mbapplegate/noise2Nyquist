@@ -14,6 +14,6 @@
 echo "Running training script..."
 ##CT
 #Supervised
-python trainNeigh2Neigh.py --noisetype none --data_dir ../data/oct/patches064/current --save_model_path ../results/phantom/neigh2neigh --log_name phantom --n_channel 1 --n_snapshot 10 --n_epoch 250 --patchsize 64 --dataType phantom --fold_number 0 --batchsize 4
+python ../trainNeigh2Neigh.py --noisetype none --data_dir ../../data/oct/patches064/current --save_model_path ../../results/phantom/neigh2neigh --log_name phantom --n_channel 1 --n_snapshot 25 --n_epoch 100 --patchsize 128 --dataType phantom --fold_number 0 --batchsize 4 --numReps 10
 
 echo "Done. Hopefully there were no errors"
