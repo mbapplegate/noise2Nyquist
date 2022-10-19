@@ -27,17 +27,17 @@ if __name__ == '__main__':
     #####################
     #Phantom L1 Random order directories
     #######################
-    cleanTarg = pd.read_csv('../../results/phantom/2022-06-29--12-00-53/00/testResults_last.csv')
-    nextTarg = pd.read_csv('../../results/phantom/2022-06-29--12-15-22/00/testResults_last.csv')
-    noisyTarg = pd.read_csv('../../results/phantom/2022-06-29--12-50-44/00/testResults_last.csv')
-    n2vTarg = pd.read_csv('../../results/phantom/2022-06-29--12-41-28/00/testResults_last.csv')
-    neigh2neigh = pd.read_csv('../../results/phantom/neigh2neigh/2022-10-17-12-04/00/testResults_last.csv')
-    n2nyqSingle = pd.read_csv('../../results/phantom/2022-06-29--12-32-07/00/testResults_last.csv')
-    n2nyqO2 = pd.read_csv('../../results/phantom/2022-06-29--12-22-34/00/testResults_last.csv')
-    n2nyqO3 = pd.read_csv('../../results/phantom/2022-06-29--12-26-37/00/testResults_last.csv')
-    n2nyqO4 = pd.read_csv('../../results/phantom/2022-06-29--12-29-37/00/testResults_last.csv')
-    n2nyqx2 = pd.read_csv('../../results/phantom/2022-08-03--17-15-42/00/testResults_last.csv')
-    n2nyqx4 = pd.read_csv('../../results/phantom/2022-08-03--17-27-48/00/testResults_last.csv')
+    cleanTarg = pd.read_csv('../../results/phantom/runs/2022-10-18--14-34-55/00/testResults_last.csv')
+    nextTarg = pd.read_csv('../../results/phantom/runs/2022-10-19--14-34-33/00/testResults_last.csv')
+    noisyTarg = pd.read_csv('../../results/phantom/runs/2022-10-18--15-26-26/00/testResults_last.csv')
+    n2vTarg = pd.read_csv('../../results/phantom/runs/2022-10-18--18-13-49/00/testResults_last.csv')
+    neigh2neigh = pd.read_csv('../../results/phantom/neigh2neigh/2022-10-19-10-09/00/testResults_last.csv')
+    #n2nyqSingle = pd.read_csv('../../results/phantom/runs/2022-06-29--12-32-07/00/testResults_last.csv')
+    n2nyqO2 = pd.read_csv('../../results/phantom/runs/2022-10-18--17-31-02/00/testResults_last.csv')
+    n2nyqO3 = pd.read_csv('../../results/phantom/runs/2022-06-29--12-26-37/00/testResults_last.csv')
+    n2nyqO4 = pd.read_csv('../../results/phantom/runs/2022-06-29--12-29-37/00/testResults_last.csv')
+    n2nyqx2 = pd.read_csv('../../results/phantom/runs/2022-10-18--16-17-49/00/testResults_last.csv')
+    n2nyqx4 = pd.read_csv('../../results/phantom/runs/2022-08-03--17-27-48/00/testResults_last.csv')
     
     #Read the data into dataframes with "Method"
     supervisedDF = pd.DataFrame({'Method':'Supervised','PSNR':cleanTarg[' PSNR'], 'SSIM':cleanTarg[' SSIM'],'MSE':cleanTarg[' MSE']})
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     p7=ax[0].plot(np.ones(o3Shape)*5+np.random.normal(0,jitterStd,o3Shape),n2nyqO3[' SSIM'],'.')
     p8=ax[0].plot(np.ones(o4Shape)*6+np.random.normal(0,jitterStd,o4Shape),n2nyqO4[' SSIM'],'.')
     p3=ax[0].plot(np.ones(datShape)*7+np.random.normal(0,jitterStd,datShape),n2vTarg[' SSIM'],'.')
-    p4=ax[0].plot(np.ones(datShape)*8+np.random.normal(0,jitterStd,datShape),n2nyqSingle[' SSIM'],'.')
+   # p4=ax[0].plot(np.ones(datShape)*8+np.random.normal(0,jitterStd,datShape),n2nyqSingle[' SSIM'],'.')
 
    
     ax[0].plot([0.8,1.2],[np.mean(cleanTarg[' SSIM']),np.mean(cleanTarg[' SSIM'])],color=p1[0].get_color(),linewidth=3)
@@ -78,12 +78,12 @@ if __name__ == '__main__':
     ax[0].plot([4.8,5.2],[np.mean(n2nyqO3[' SSIM']),np.mean(n2nyqO3[' SSIM'])],color=p7[0].get_color(),linewidth=3)
     ax[0].plot([5.8,6.2],[np.mean(n2nyqO4[' SSIM']),np.mean(n2nyqO4[' SSIM'])],color=p8[0].get_color(),linewidth=3)
     ax[0].plot([6.8,7.2],[np.mean(n2vTarg[' SSIM']),np.mean(n2vTarg[' SSIM'])],color=p3[0].get_color(),linewidth=3)
-    ax[0].plot([7.8,8.2],[np.mean(n2nyqSingle[' SSIM']),np.mean(n2nyqSingle[' SSIM'])],color=p4[0].get_color(),linewidth=3)
+    #ax[0].plot([7.8,8.2],[np.mean(n2nyqSingle[' SSIM']),np.mean(n2nyqSingle[' SSIM'])],color=p4[0].get_color(),linewidth=3)
     
     ax[0].set_ylim([0.65,1])
     ax[0].set_ylabel('SSIM')
-    ax[0].set_xticks([1,2,3,4,5,6,7,8])
-    ax[0].set_xticklabels(['Supervised','noise2noise', 'noise2Nyq','Nyq/2','Nyq/3','Nyq/4','noise2void','line2line'],rotation=20,ha='right')
+    ax[0].set_xticks([1,2,3,4,5,6,7])
+    ax[0].set_xticklabels(['Supervised','noise2noise', 'noise2Nyq','Nyq/2','Nyq/3','Nyq/4','noise2void'],rotation=20,ha='right')
     ax[0].set_title('Phantom Denoising Similarity')
     
     p1=ax[1].plot(np.ones(datShape)+np.random.normal(0,jitterStd,datShape),cleanTarg[' MSE'],'.')
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     p7=ax[1].plot(np.ones(o3Shape)*5+np.random.normal(0,jitterStd,o3Shape),n2nyqO3[' MSE'],'.')
     p8=ax[1].plot(np.ones(o4Shape)*6+np.random.normal(0,jitterStd,o4Shape),n2nyqO4[' MSE'],'.')
     p3=ax[1].plot(np.ones(datShape)*7+np.random.normal(0,jitterStd,datShape),n2vTarg[' MSE'],'.')
-    p4=ax[1].plot(np.ones(datShape)*8+np.random.normal(0,jitterStd,datShape),n2nyqSingle[' MSE'],'.')
+    #p4=ax[1].plot(np.ones(datShape)*8+np.random.normal(0,jitterStd,datShape),n2nyqSingle[' MSE'],'.')
    
     ax[1].plot([0.8,1.2],[np.mean(cleanTarg[' MSE']),np.mean(cleanTarg[' MSE'])],color=p1[0].get_color(),linewidth=3)
     ax[1].plot([1.8,2.2],[np.mean(noisyTarg[' MSE']),np.mean(noisyTarg[' MSE'])],color=p2[0].get_color(),linewidth=3)
@@ -102,18 +102,18 @@ if __name__ == '__main__':
     ax[1].plot([4.8,5.2],[np.mean(n2nyqO3[' MSE']),np.mean(n2nyqO3[' MSE'])],color=p7[0].get_color(),linewidth=3)
     ax[1].plot([5.8,6.2],[np.mean(n2nyqO4[' MSE']),np.mean(n2nyqO4[' MSE'])],color=p8[0].get_color(),linewidth=3)
     ax[1].plot([6.8,7.2],[np.mean(n2vTarg[' MSE']),np.mean(n2vTarg[' MSE'])],color=p3[0].get_color(),linewidth=3)
-    ax[1].plot([7.8,8.2],[np.mean(n2nyqSingle[' MSE']),np.mean(n2nyqSingle[' MSE'])],color=p4[0].get_color(),linewidth=3)
+    #ax[1].plot([7.8,8.2],[np.mean(n2nyqSingle[' MSE']),np.mean(n2nyqSingle[' MSE'])],color=p4[0].get_color(),linewidth=3)
     
     ax[1].set_ylim([0,45])
     ax[1].set_ylabel('MSE')
-    ax[1].set_xticks([1,2,3,4,5,6,7,8])
-    ax[1].set_xticklabels(['Supervised','noise2noise', 'noise2Nyq','Nyq/2','Nyq/3','Nyq/4','noise2void','line2line'],rotation=20,ha='right')
+    ax[1].set_xticks([1,2,3,4,5,6,7])
+    ax[1].set_xticklabels(['Supervised','noise2noise', 'noise2Nyq','Nyq/2','Nyq/3','Nyq/4','noise2void'],rotation=20,ha='right')
     ax[1].set_title('Phantom Denoising Error')
     plt.savefig('../../results/phantom/figures/PhantomQuant_L1Random.png')
     
     #Now use seaborn to make cool swarmplots
     fig,ax = plt.subplots(1,2,figsize=(16,8))
-    sns.swarmplot(x='Method',y='PSNR',data=phantomDF,ax=ax[0],size=3.5)
+    sns.swarmplot(x='Method',y='PSNR',data=phantomDF,ax=ax[0],size=4)
     # plot the mean line
     sns.boxplot(showmeans=True,
                 meanline=True,
@@ -129,7 +129,7 @@ if __name__ == '__main__':
                 showcaps=False,
                 width=0.6,
                 ax=ax[0])
-    sns.swarmplot(x='Method',y='SSIM',data=phantomDF,ax=ax[1],size=3.5)
+    sns.swarmplot(x='Method',y='SSIM',data=phantomDF,ax=ax[1],size=4)
     # plot the mean line
     sns.boxplot(showmeans=True,
                 meanline=True,

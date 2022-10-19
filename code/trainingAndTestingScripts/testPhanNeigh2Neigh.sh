@@ -14,6 +14,6 @@
 echo "Running training script..."
 ##CT
 #Supervised
-python trainOOP_CL.py --dataType phantom --trainPhantomFile ./HRPhantomData/SheppLoganPhan.mat --valPhantomFile ./HRPhantomData/YuYeWangPhan.mat --saveDir ../results/phantom/neigh2neigh/2022-10-17-12-04 --randomOrder --loss_fn l1 --batch_size 4 --numTrainingIms 65536 --numValidIms 1024 --numTestIms 0 --numEpochs 150 --startSplit 0 --splitsToTrain 1 --nfolds 10 --testOnly --singleImage
+python ../trainOOP_CL.py --dataType phantom --trainPhantomFile ../HRPhantomData/SheppLoganPhan.mat --valPhantomFile ../HRPhantomData/YuYeWangPhan.mat --saveDir ../../results/phantom/neigh2neigh/2022-10-19-10-09 --randomOrder --loss_fn l1 --batch_size 4 --numTrainingIms 65536 --numValidIms 1024 --numTestIms 0 --numEpochs 150 --startSplit 0 --splitsToTrain 10 --nfolds 10 --testOnly --singleImage
 
 echo "Done. Hopefully there were no errors"

@@ -25,7 +25,7 @@ python ../trainOOP_CL.py --dataType phantom --saveDir ../../results/phantom \
 
 #Next Targets (Nyquist)
 python ../trainOOP_CL.py --dataType phantom --saveDir ../../results/phantom --nextImFlag \
---loss_fn l1 --batch_size 4 --calcStats --phantomNoiseLevel 45 --sampMult 0.5 --randomOrder \
+--loss_fn l1 --batch_size 4 --calcStats --phantomNoiseLevel 45 --sampMult 1 --randomOrder \
 --trainPhantomFile ../HRPhantomData/SheppLoganPhan.mat --valPhantomFile ../HRPhantomData/YuYeWangPhan.mat --numEpochs 150 --splitsToTrain 10 --startSplit 0 --nfolds 10
 
 #Next Targets (Nyquist/2)
