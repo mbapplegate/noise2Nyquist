@@ -10,6 +10,7 @@ import numpy as np
 import os
 import glob
 from scipy.io import loadmat
+from scipy import stats
 
 #Helper function to calculate mean and std from the phantom conventional processing directory
 #Inputs:
@@ -23,14 +24,16 @@ from scipy.io import loadmat
 ##########################################################################
 def getPhantomStats(dataDir,method,numReps):
     allAvg=[]
+    avgDat=[]
     for i in range(numReps):
         datFile = glob.glob(os.path.join(dataDir,method,'%02d'%i,'*.csv'))
         data = pd.read_csv(datFile[0])
         avgStats = [np.mean(data[' PSNR']),np.mean(data[' SSIM']),np.mean(data[' MSE'])]
+        avgDat.append(avgStats)
         allAvg.append(avgStats)
     aggAvg = np.mean(np.array(allAvg),0)
     aggStd = np.std(np.array(allAvg),0)
-    return aggAvg,aggStd,data
+    return aggAvg,aggStd,data,avgDat
 
 #Helper function to calculate mean and std from the confocal conventional processing directory
 #Inputs:
@@ -55,7 +58,7 @@ def getConventionalStats(dataDir,method):
             
     avgStats = np.mean(np.array(volAvgData),0)
     stdStats = np.std(np.array(volAvgData),0)
-    return avgStats,stdStats
+    return avgStats,stdStats,volAvgData
 
 #Helper function to calculate mean and std from the conventional processing directory for CT data
 #Inputs:
@@ -74,7 +77,7 @@ def getConventionalStatsCT(dataDir,method):
         patientAvgData.append([np.mean(data[' PSNR']),np.mean(data[' SSIM']),np.mean(data[' MSE'])])
     avgStats = np.mean(np.array(patientAvgData),0)
     stdStats = np.std(np.array(patientAvgData),0)
-    return avgStats, stdStats
+    return avgStats, stdStats,patientAvgData
 
 #Get mean and std of data for confocal and CT ML methods
 #Inputs:
@@ -103,7 +106,7 @@ def getSummaryStats(listOfData):
     #Calc aggregate averages
     avgStats = np.mean(volAvgData,0)
     stdStats = np.std(volAvgData,0)
-    return avgStats,stdStats
+    return avgStats,stdStats,volAvgData
 
 #Get results from Random frames of the CT scan
 #Inputs:
@@ -264,6 +267,7 @@ if __name__ == '__main__':
     neigh2neighPhanAvg=np.mean(np.array(neigh2neighPhanResults),0)
     neigh2neighPhanStd=np.std(np.array(neigh2neighPhanResults),0)
     
+    
     #supervisedPhanAvg = [np.mean(supervisedPhan[' PSNR']), np.mean(supervisedPhan[' SSIM']), np.mean(supervisedPhan[' MSE'])]
     #supervisedPhanStd= [np.std(supervisedPhan[' PSNR']), np.std(supervisedPhan[' SSIM']), np.std(supervisedPhan[' MSE'])]
     #noise2NyquistPhanAvg =[np.mean(noise2NyquistPhan[' PSNR']), np.mean(noise2NyquistPhan[' SSIM']), np.mean(noise2NyquistPhan[' MSE'])]
@@ -277,12 +281,31 @@ if __name__ == '__main__':
     #line2LinePhanAvg =  [np.mean(line2linePhan[' PSNR']), np.mean(line2linePhan[' SSIM']), np.mean(line2linePhan[' MSE'])]
     #line2LinePhanStd =  [np.std(line2linePhan[' PSNR']), np.std(line2linePhan[' SSIM']), np.std(line2linePhan[' MSE'])]
     numReps=10
-    noisyPhanAvg, noisyPhanStd,noisyData = getPhantomStats(convenDirPhan,'none',numReps)
-    medianPhanAvg, medianPhanStd,medianData = getPhantomStats(convenDirPhan,'median',numReps)
-    gaussianPhanAvg, gaussianPhanStd,gaussianData = getPhantomStats( convenDirPhan,'gaussian',numReps)
-    oofPhanAvg,oofPhanStd,oofData = getPhantomStats(convenDirPhan,'oofAvg',numReps)
-    bm3dPhanAvg,bm3dPhanStd,bm3dData = getPhantomStats(convenDirPhan,'bm3d',numReps)
-    bm4dPhanAvg,bm4dPhanStd,bm4dData = getPhantomStats(convenDirPhan,'bm4d',numReps)
+    noisyPhanAvg, noisyPhanStd,noisyData,avgNoise = getPhantomStats(convenDirPhan,'none',numReps)
+    medianPhanAvg, medianPhanStd,medianData,avgMed = getPhantomStats(convenDirPhan,'median',numReps)
+    gaussianPhanAvg, gaussianPhanStd,gaussianData,avgGauss = getPhantomStats( convenDirPhan,'gaussian',numReps)
+    oofPhanAvg,oofPhanStd,oofData,avgOOF = getPhantomStats(convenDirPhan,'oofAvg',numReps)
+    bm3dPhanAvg,bm3dPhanStd,bm3dData,avgBM3d = getPhantomStats(convenDirPhan,'bm3d',numReps)
+    bm4dPhanAvg,bm4dPhanStd,bm4dData,avgBM4d = getPhantomStats(convenDirPhan,'bm4d',numReps)
+    
+    #T Test too see if any of the top performers are statistically different
+    #Using a p<0.1 as a significance value and bonferroni correction
+    supPhanResMat = np.matrix(supervisedPhanResults)
+    n2vPhanResMat = np.matrix(noise2voidPhanResults)
+    n2nyqPhanResMat=np.matrix(noise2nyquistPhanResults)
+    n2noisePhanResMat=np.matrix(noise2noisePhanResults)
+    bm4dResMat = np.matrix(avgBM4d)
+    ####PSNR
+    #For first place supervised has the highest mean
+    sup_vs_n2v=stats.ttest_ind(supPhanResMat[:,0],n2vPhanResMat[:,0]) #Not significant p=0.13
+    sup_vs_n2nyq=stats.ttest_ind(supPhanResMat[:,0],n2nyqPhanResMat[:,0]) #Significant p=0.01 which is less than 0.1/2=0.05
+    #For second place n2nyq has the highest mean
+    n2nyq_vs_n2noise=stats.ttest_ind(n2nyqPhanResMat[:,0],n2noisePhanResMat[:,0]) #Not sig. p=0.6
+    n2nyq_vs_bm4d = stats.ttest_ind(n2nyqPhanResMat[:,0],bm4dResMat[:,0])#Significant p=1e-6
+    
+    ####SSIM
+    n2nyq_vs_sup=stats.ttest_ind(n2nyqPhanResMat[:,1],supPhanResMat[:,1])
+   
     
     #Get all Confocal Data
     #Boil everything down to mean +/- standard deviation
@@ -306,18 +329,36 @@ if __name__ == '__main__':
         truncNeigh2Neigh=pd.read_csv(os.path.join(neigh2neighDirFCM,'%02d'%f,'testResults_last.csv'))
         neigh2neighFCMResults.append(getResultsFCM(truncNeigh2Neigh))
         
-    supervisedFCMAvg, supervisedFCMStd = getSummaryStats(supervisedFCMResults)
-    noise2NyquistFCMAvg, noise2NyquistFCMStd = getSummaryStats(noise2NyquistFCMResults)
-    noise2VoidFCMAvg, noise2VoidFCMStd = getSummaryStats(noise2VoidFCMResults)
-    line2LineFCMAvg, line2LineFCMStd = getSummaryStats(line2LineFCMResults)
-    neigh2neighFCMAvg,neigh2neighFCMStd = getSummaryStats(neigh2neighFCMResults)
+    supervisedFCMAvg, supervisedFCMStd,supervisedVolDat = getSummaryStats(supervisedFCMResults)
+    noise2NyquistFCMAvg, noise2NyquistFCMStd,n2nyqVolDat = getSummaryStats(noise2NyquistFCMResults)
+    noise2VoidFCMAvg, noise2VoidFCMStd,n2noiseVolDat = getSummaryStats(noise2VoidFCMResults)
+    line2LineFCMAvg, line2LineFCMStd,l2lVolDat = getSummaryStats(line2LineFCMResults)
+    neigh2neighFCMAvg,neigh2neighFCMStd,neigh2neighVolDat = getSummaryStats(neigh2neighFCMResults)
     
-    noisyFCMAvg, noisyFCMStd = getConventionalStats(convenDirFCM,'none0')
-    medianFCMAvg, medianFCMStd = getConventionalStats(convenDirFCM,'median3')
-    gaussianFCMAvg, gaussianFCMStd = getConventionalStats(convenDirFCM,'gaussian1')
-    oof3FCMAvg, oof3FCMStd = getConventionalStats(convenDirFCM,'oofAvg3')
-    bm3dFCMAvg, bm3dFCMStd = getConventionalStats(convenDirFCM,'bm3d0.2')
-    bm4dFCMAvg, bm4dFCMStd = getConventionalStats(convenDirFCM,'bm4d0.2')
+    noisyFCMAvg, noisyFCMStd,noisyFCMDat = getConventionalStats(convenDirFCM,'none0')
+    medianFCMAvg, medianFCMStd,medianFCMDat = getConventionalStats(convenDirFCM,'median3')
+    gaussianFCMAvg, gaussianFCMStd,gaussFCMDat = getConventionalStats(convenDirFCM,'gaussian1')
+    oof3FCMAvg, oof3FCMStd,oofFCMDat = getConventionalStats(convenDirFCM,'oofAvg3')
+    bm3dFCMAvg, bm3dFCMStd,bm3FCMDat = getConventionalStats(convenDirFCM,'bm3d0.2')
+    bm4dFCMAvg, bm4dFCMStd,bm4FCMDat = getConventionalStats(convenDirFCM,'bm4d0.2')
+    
+    #T-Tests to determine best and second best
+    supFCMDat = np.matrix(supervisedVolDat);
+    n2nyqFCMDat = np.matrix(n2nyqVolDat);
+    bm4dFCMDat = np.matrix(bm4FCMDat)
+    neighFCMDat = np.matrix(neigh2neighVolDat)
+    ###First place
+    sup_vs_n2nyqFCM = stats.ttest_ind(supFCMDat[:,0],n2nyqFCMDat[:,0]) #not significant p=0.18
+    sup_vs_bm4dFCM = stats.ttest_ind(supFCMDat[:,0],bm4dFCMDat[:,0]) #p=0.0001, significant at p<0.1/2
+    ###Second place
+    bm4d_vs_neigh = stats.ttest_ind(bm4dFCMDat[:,0],neighFCMDat[:,0]) #p=0.001, significant
+    
+    #SSIM
+    ###First place
+    sup_vs_n2nyqFCMssim = stats.ttest_ind(supFCMDat[:,1],n2nyqFCMDat[:,1]) #not significant p=0.21
+    sup_vs_bm4dFCMssim = stats.ttest_ind(supFCMDat[:,1],bm4dFCMDat[:,1]) #p=2e-5, significant at p<0.1/2
+    ###Second place
+    bm4d_vs_neighssim = stats.ttest_ind(bm4dFCMDat[:,0],neighFCMDat[:,1]) #p=0, significant
     
     #Get all CT Data
     #Boil everything down to mean +/- standard deviation
@@ -340,19 +381,46 @@ if __name__ == '__main__':
         truncNe2Ne=pd.read_csv(os.path.join(neigh2neighDirCT,'%02d'%f,'testResults_last.csv'))
         neigh2neighCTResults.append(getRandomNResultsCT(truncNe2Ne,numCTFrames))
         
-    supervisedCTAvg, supervisedCTStd = getSummaryStats(supervisedCTResults)
-    noise2NyquistCTAvg, noise2NyquistCTStd = getSummaryStats(noise2NyquistCTResults)
-    noise2VoidCTAvg, noise2VoidCTStd = getSummaryStats(noise2VoidCTResults)
-    line2LineCTAvg, line2LineCTStd = getSummaryStats(line2LineCTResults)
-    neigh2neighCTAvg,neigh2neighCTStd=getSummaryStats(neigh2neighCTResults)
+    supervisedCTAvg, supervisedCTStd,supCTVol = getSummaryStats(supervisedCTResults)
+    noise2NyquistCTAvg, noise2NyquistCTStd,n2nyqCTVol = getSummaryStats(noise2NyquistCTResults)
+    noise2VoidCTAvg, noise2VoidCTStd,n2vCTVol = getSummaryStats(noise2VoidCTResults)
+    line2LineCTAvg, line2LineCTStd,l2lCTVol = getSummaryStats(line2LineCTResults)
+    neigh2neighCTAvg,neigh2neighCTStd,neighCTVol=getSummaryStats(neigh2neighCTResults)
     
-    noisyCTAvg, noisyCTStd = getConventionalStatsCT(convenDirCT,'none0')
-    medianCTAvg, medianCTStd = getConventionalStatsCT(convenDirCT,'median3')
-    gaussianCTAvg, gaussianCTStd = getConventionalStatsCT(convenDirCT,'gaussian1')
-    oof3CTAvg, oof3CTStd = getConventionalStatsCT(convenDirCT,'oofAvg3')
-    bm3dCTAvg, bm3dCTStd = getConventionalStatsCT(convenDirCT,'bm3d0.05')
-    bm4dCTAvg, bm4dCTStd = getConventionalStatsCT(convenDirCT,'bm4d0.05')
+    noisyCTAvg, noisyCTStd,noisyCTVol = getConventionalStatsCT(convenDirCT,'none0')
+    medianCTAvg, medianCTStd,medianCTVol = getConventionalStatsCT(convenDirCT,'median3')
+    gaussianCTAvg, gaussianCTStd,gaussianCTVol = getConventionalStatsCT(convenDirCT,'gaussian1')
+    oof3CTAvg, oof3CTStd,oofCTVol = getConventionalStatsCT(convenDirCT,'oofAvg3')
+    bm3dCTAvg, bm3dCTStd,bm3dCTVol = getConventionalStatsCT(convenDirCT,'bm3d0.05')
+    bm4dCTAvg, bm4dCTStd,bm4dCTVol = getConventionalStatsCT(convenDirCT,'bm4d0.05')
     
+    ####T test to find best and second best
+    #PSNR first
+    bm4dCTDat = np.matrix(bm4dCTVol)
+    bm3dCTDat = np.matrix(bm3dCTVol)
+    medianCTDat = np.matrix(medianCTVol)
+    n2nyqCTDat = np.matrix(n2nyqCTVol)
+    oofCTDat = np.matrix(oofCTVol)
+    gaussCTDat = np.matrix(gaussianCTVol)
+    supCTDat = np.matrix(supCTVol)
+    neighCTDat = np.matrix(neighCTVol)
+    
+    bm3d_vs_bm4dCT = stats.ttest_ind(bm4dCTDat[:,0],bm3dCTDat[:,0]) #p=0.5, not significant
+    bm4d_vs_n2nyqCT= stats.ttest_ind(bm4dCTDat[:,0],n2nyqCTDat[:,0]) #p=0.006, significant at p<0.1/2
+    #PSNR second
+    n2nyq_vs_medCT= stats.ttest_ind(n2nyqCTDat[:,0],medianCTDat[:,0]) #p=0.4, not significant
+    n2nyq_vs_oofCT = stats.ttest_ind(n2nyqCTDat[:,0],oofCTDat[:,0])   #p=0.2 not significant at 0.1/2
+    n2nyq_vs_gaussCT=stats.ttest_ind(n2nyqCTDat[:,0],gaussCTDat[:,0]) #p=7E-4, significant at 0.1/3
+    
+    #SSIM First
+    bm3d_vs_bm4dCTssim = stats.ttest_ind(bm4dCTDat[:,1],bm3dCTDat[:,1]) #p=0.7, not significant
+    bm4d_vs_n2nyqCTssim= stats.ttest_ind(bm4dCTDat[:,1],n2nyqCTDat[:,1]) #p=0.5, not significant at p<0.1/2
+    bm4d_vs_supCTssim = stats.ttest_ind(bm4dCTDat[:,1],supCTDat[:,1])#    p=0.3, not significant at 0.1/3
+    bm4d_vs_gaussCTssim = stats.ttest_ind(bm4dCTDat[:,1],gaussCTDat[:,1]) #p=0.12 not significant at 0.1/4
+    bm4d_vs_medssim = stats.ttest_ind(bm4dCTDat[:,1],medianCTDat[:,1])    #p=0.01 significant at 0.1/5
+    #SSIM Second
+    med_vs_oofCTssim = stats.ttest_ind(medianCTDat[:,1],oofCTDat[:,1]) #p=0.2, not significant
+    med_vs_neighCTssim=stats.ttest_ind(medianCTDat[:,1],neighCTDat[:,1])#p=0.004, significant at 0.1/2
     #Boil everything down to mean +/- standard deviation
     #But I want the standard deviation with n=number of patients
     print("Collecting OCT Data...")
@@ -411,12 +479,21 @@ if __name__ == '__main__':
     convDF['Frame'] =frameListConv.flatten()
     
     #Here I group by volume and denoising method
-    volDF=convDF.groupby(['Volume','Method']).mean()
-    volDF.reset_index(inplace=True)
+    volDFconv=convDF.groupby(['Volume','Method']).mean()
+    volDFconv.reset_index(inplace=True)
     #Then I calculate mean and std
-    convOCTAvg = volDF.groupby(['Method']).mean()
-    convOCTStd = volDF.groupby(['Method']).std()
+    convOCTAvg = volDFconv.groupby(['Method']).mean()
+    convOCTStd = volDFconv.groupby(['Method']).std()
     
+    ##T-tests for best and second
+    n2NyqDat = volDF[volDF["Method"]=="noise2Nyquist"]
+    medDat = volDFconv[volDFconv["Method"]=="median"]
+    gaussDat = volDFconv[volDFconv["Method"]=="gaussian"]
+    bm3dDat = volDFconv[volDFconv["Method"]=="bm3d"]
+    n2nyq_vs_medOCT = stats.ttest_ind(n2NyqDat["NIQI"],medDat["NIQI"]) #p=.15, not significant
+    n2nyq_vs_gaussOCT = stats.ttest_ind(n2NyqDat["NIQI"],gaussDat["NIQI"]) #p=0.02, significant at 0.1/2
+    #Second place
+    gauss_vs_bm3dOCT = stats.ttest_ind(gaussDat["NIQI"],bm3dDat["NIQI"]) #p=0.04, significant
     ############################################
     #Collect phantom data into nice dataframe to copy to table
     ################################################
