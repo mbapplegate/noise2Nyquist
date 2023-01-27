@@ -72,6 +72,7 @@ if __name__ == '__main__':
     p=sns.violinplot(x='Volume',y='NIQI',hue='Method',data=someScansDF,ax=ax,inner='quartile',palette = pal)
     plt.legend(loc='upper left')
     ax.set_xlabel('Volume Number')
+    ax.set_ylabel('NIQI Ratio')
     for l in p.lines:
      l.set_linestyle(':')
      l.set_linewidth(3)
